@@ -15,6 +15,7 @@ import netaddr as na
 # User-defined modules
 from sim.SimCore import *
 from sim.SimEvent import *
+from sim.SimFlow import *
 
 if __name__ == '__main__':
     mySim = SimCore('config.py')
@@ -22,5 +23,8 @@ if __name__ == '__main__':
     #print mySim.__doc__
     #print mySim.__init__.__doc__
 
-    myEvent = FlowEnd(src_ip=na.IPAddress(1), dst_ip=na.IPAddress(2))
+    myEvent = EvFlowEnd(src_ip=na.IPAddress(1), dst_ip=na.IPAddress(2))
     print myEvent
+
+    myFlow = FlowProf()
+    print myFlow

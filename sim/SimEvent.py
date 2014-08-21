@@ -7,16 +7,12 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
-
-
 # Built-in modules
 import inspect
 # Third-party modules
 import netaddr as na
 # User-defined modules
 from config import *
-
-
 
 
 class Event:
@@ -34,9 +30,11 @@ class Event:
         self.evtype = evtype
 
     def __str__(self):
-        ret = 'Event type: %s\n' %(self.evtype)
+        ret = 'Event type: %s\n' %(self.evtype)     # Header line shows event type
+
         attrs = ([attr for attr in dir(self)
                   if not attr.startswith('__') and not attr=='evtype'])
+                                                    # Print attribute name and value line by line
         for attr in attrs:
             ret += '    %s: %s\n' %(attr, getattr(self, attr))
         return ret
@@ -45,9 +43,7 @@ class Event:
         return str(self)
 
 
-
-
-class FlowArrival(Event):
+class EvFlowArrival(Event):
     """Event that signals arrival of a flow, and will trigger a PacketIn event.
 
     Attributes:
@@ -70,9 +66,7 @@ class FlowArrival(Event):
         self.flow_rate = flow_rate
 
 
-
-
-class PacketIn(Event):
+class EvPacketIn(Event):
     """Event that signals an OpenFlow packet-in request's arrival at the controller.
 
     Attributes:
@@ -87,9 +81,7 @@ class PacketIn(Event):
         self.dst_ip = dst_ip
 
 
-
-
-class FlowInstall(Event):
+class EvFlowInstall(Event):
     """Event that signals installation of a flow at switches along selected path.
 
     Attributes:
@@ -107,9 +99,7 @@ class FlowInstall(Event):
         self.path = path
 
 
-
-
-class FlowEnd(Event):
+class EvFlowEnd(Event):
     """Event that signals end of a flow, and will trigger a IdleTimeout event.
 
     Attributes:
@@ -124,9 +114,7 @@ class FlowEnd(Event):
         self.dst_ip = dst_ip
 
 
-
-
-class IdleTimeout(Event):
+class EvIdleTimeout(Event):
     """Event that signals idle timeout of a flow and consequent removal of its entries.
 
     Attributes:
@@ -134,3 +122,19 @@ class IdleTimeout(Event):
       src_ip (netaddr.ip.IPAddress): Source IP
       dst_ip (netaddr.ip.IPAddress): Destination IP
     """
+
+    def __init__(self, src_ip=na.IPAddress(0), dst_ip=na.IPAddress(0)):
+        Event.__init__(self, 'IdleTimeout')
+        self.src_ip = src_ip
+        self.dst_ip = dst_ip
+
+
+class EvCollectStats(Event):
+    """Event that signals controller's pulling flow-level statistics.
+
+    Attributes:
+      evtype (str): 'CollectStats'
+    """
+
+    def __init__(self):
+        Event.__init__(self, 'CollectStats')

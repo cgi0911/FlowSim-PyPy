@@ -6,8 +6,6 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
-
-
 # Built-in modules
 import os
 import csv
@@ -48,30 +46,17 @@ class SimCore:
 
         # ----
 
+    def __repr__(self):
+        return ('Hello World! The instance ID is %d' % id(self) )
 
+    def __str__(self):
+        return 'Hello World!'
 
-
+    def displayTopo(self):
+        print self.topo
 
     def genInitFlows(self):
         """
         Generate initial flows. Called at start of simulation loop.
         """
         pass
-
-
-
-
-    def __repr__(self):
-        return ('Hello World! The instance ID is %d' % id(self) )
-
-
-
-
-    def __str__(self):
-        return 'Hello World!'
-
-
-
-
-    def displayTopo(self):
-        print self.topo
