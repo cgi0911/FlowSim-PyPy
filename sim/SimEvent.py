@@ -15,12 +15,16 @@ import netaddr as na
 from config import *
 
 
-class Event:
+class SimEvent:
     """Base class of events, which is going to be queued in event queue under SimCore.
 
     Attributes:
       evtype (str): Explicitly illustrates the event's type
                   (FlowArrival, FlowEnd, CollectStats, etc.)
+
+    Extra Notes:
+        1. Event types:
+           FlowArrival, FlowInstall, FlowEnd, IdleTimeout, HardTimeout, CollectStats, DoReroute
 
     """
 
@@ -43,7 +47,7 @@ class Event:
         return str(self)
 
 
-class EvFlowArrival(Event):
+class EvFlowArrival(SimEvent):
     """Event that signals arrival of a flow, and will trigger a PacketIn event.
 
     Attributes:
@@ -59,14 +63,14 @@ class EvFlowArrival(Event):
                  dst_ip=na.IPAddress(0),
                  flow_size=0.0,
                  flow_rate=1.0):
-        Event.__init__(self, 'FlowArrival')
+        SimEvent.__init__(self, 'FlowArrival')
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.flow_size = flow_size
         self.flow_rate = flow_rate
 
 
-class EvPacketIn(Event):
+class EvPacketIn(SimEvent):
     """Event that signals an OpenFlow packet-in request's arrival at the controller.
 
     Attributes:
@@ -76,12 +80,12 @@ class EvPacketIn(Event):
     """
 
     def __init__(self, src_ip=na.IPAddress(0), dst_ip=na.IPAddress(0)):
-        Event.__init__(self, 'PacketIn')
+        SimEvent.__init__(self, 'PacketIn')
         self.src_ip = src_ip
         self.dst_ip = dst_ip
 
 
-class EvFlowInstall(Event):
+class EvFlowInstall(SimEvent):
     """Event that signals installation of a flow at switches along selected path.
 
     Attributes:
@@ -93,13 +97,13 @@ class EvFlowInstall(Event):
 
     def __init__(self, src_ip=na.IPAddress(0), dst_ip=na.IPAddress(0),
                  path=[] ):
-        Event.__init__(self, 'FlowInstall')
+        SimEvent.__init__(self, 'FlowInstall')
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.path = path
 
 
-class EvFlowEnd(Event):
+class EvFlowEnd(SimEvent):
     """Event that signals end of a flow, and will trigger a IdleTimeout event.
 
     Attributes:
@@ -109,12 +113,12 @@ class EvFlowEnd(Event):
     """
 
     def __init__(self, src_ip=na.IPAddress(0), dst_ip=na.IPAddress(0)):
-        Event.__init__(self, 'FlowEnd')
+        SimEvent.__init__(self, 'FlowEnd')
         self.src_ip = src_ip
         self.dst_ip = dst_ip
 
 
-class EvIdleTimeout(Event):
+class EvIdleTimeout(SimEvent):
     """Event that signals idle timeout of a flow and consequent removal of its entries.
 
     Attributes:
@@ -124,12 +128,12 @@ class EvIdleTimeout(Event):
     """
 
     def __init__(self, src_ip=na.IPAddress(0), dst_ip=na.IPAddress(0)):
-        Event.__init__(self, 'IdleTimeout')
+        SimEvent.__init__(self, 'IdleTimeout')
         self.src_ip = src_ip
         self.dst_ip = dst_ip
 
 
-class EvCollectStats(Event):
+class EvCollectStats(SimEvent):
     """Event that signals controller's pulling flow-level statistics.
 
     Attributes:
@@ -137,4 +141,4 @@ class EvCollectStats(Event):
     """
 
     def __init__(self):
-        Event.__init__(self, 'CollectStats')
+        SimEvent.__init__(self, 'CollectStats')
