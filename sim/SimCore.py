@@ -16,6 +16,8 @@ import netaddr as na
 import pandas as pd
 # User-defined modules
 from config import *
+from SimCtrl import *
+from SimFlowGen import *
 from SimSwitch import *
 from SimLink import *
 from SimEvent import *
@@ -25,11 +27,19 @@ class SimCore:
     """Core class of FlowSim simulator.
 
     Attributes:
-        topo (networkx.Graph): Network topology as an undirected graph.
+        sim_time (float64): Total simulation time
+        timer (float64): Simulation timer, which keeps current time progress
+        topo (networkx.Graph): An undirected graph to keep network topology
+        ev_queue (list of 2-tuples): Event queue. Each element is a 2-tuple of (evtime, event obj)
+        nodes_df (pandas.DataFrame): A dataframe that contains switching nodes' names and params.
+        links_df (pandas.DataFrame): A dataframe that contains links' names and params.
+        link_util_recs (list of np.array): List of link utilization records.
+        table_util_recs (list of np.array): List of table utilization records.
+        flow_stats_recs (list of np.array): List of flow stats records.
 
     Extra Notes:
-        topo.node[node]['item'] (SimSwitch): Edge switche in the topology.
-        topo[node1][node2]['item'] (SimLink): Link in the topology.
+        topo.node[node]['item'] (SimSwitch): Edge switch instances in the topology.
+        topo[node1][node2]['item'] (SimLink): Link instances in the topology.
 
     """
 
@@ -37,15 +47,6 @@ class SimCore:
         """Constructor of SimCore class.
 
         Args:
-            sim_time (float64): Total simulation time
-            timer (float64): Simulation timer, which keeps current time progress
-            topo (networkx.Graph): An undirected graph to keep network topology
-            ev_queue (list of 2-tuples): Event queue. Each element is a 2-tuple of (evtime, event obj)
-            nodes_df (pandas.DataFrame): A dataframe that contains switching nodes' names and params.
-            links_df (pandas.DataFrame): A dataframe that contains links' names and params.
-            link_util_recs (list of np.array): List of link utilization records.
-            table_util_recs (list of np.array): List of table utilization records.
-            flow_stats_recs (list of np.array): List of flow stats records.
 
         Extra Notes:
             If not otherwise specified, all initial values come from config.py
@@ -58,18 +59,22 @@ class SimCore:
 
         self.topo = nx.Graph()
 
-        # ---- Simulator components ----
-        # SimController
-        # SimFlowGen
-        # SimSwitch will be initilized in df_to_topo
-        # SimLink will be initialized in df_to_topo
-
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
         fn_nodes = os.path.join(DIR_TOPO, 'nodes.csv')
         fn_links = os.path.join(DIR_TOPO, 'links.csv')
         self.nodes_df = pd.read_csv(fn_nodes, index_col=False)
         self.links_df = pd.read_csv(fn_links, index_col=False)
         self.df_to_topo(self.nodes_df, self.links_df)   # Translate pd.DataFrame into networkx.Graph
+
+        # ---- Simulator components ----
+        # SimController: Currently assume one omniscient controller
+        # SimFlowGen:
+        # SimSwitch instances are instantiated in df_to_topo
+        # SimLink instances are instantitated in df_to_topo
+        self.ctrl = SimCtrl(self)
+        self.flowgen = SimFlowGen()
+
+
 
         # ---- Generate hosts, assign IP addresses and map hosts to their edge switches ----
 
@@ -99,6 +104,7 @@ class SimCore:
 
     def df_to_topo(self, nodes_df, links_df):
         """Read the nodes and link dataframe row by row and translate into networkx.Graph.
+        Referred by SimCore.__init__().
         """
         for myRow in nodes_df.iterrows():
             rowdict = dict(myRow[1])    # myRow is a 2-tuple: (index, dict of params)
