@@ -20,13 +20,13 @@ from sim.SimFlow import *
 
 if __name__ == '__main__':
     mySim = SimCore()
-    #print mySim.__class__
-    #print mySim.__doc__
-    print mySim.__init__.__doc__
-    #mySim.display_topo_details()
+    #print mySim.__init__.__doc__
+    mySim.display_topo_details()
+    #mySim.main_course()
 
-    myEvent = EvFlowEnd(src_ip=na.IPAddress(1), dst_ip=na.IPAddress(2))
+    #myEvent = EvFlowArrival(src_ip=na.IPAddress(1), dst_ip=na.IPAddress(2))
+    #myEvent = EvFlowInstall(evtime=12345.0)
     #print myEvent
 
-    myFlow = SimFlow()
+    #myFlow = SimFlow()
     #print myFlow
