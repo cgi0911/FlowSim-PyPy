@@ -23,7 +23,7 @@ if __name__ == '__main__':
     #mySim.ctrl.display_path_db()
     #print mySim.__init__.__doc__
     #mySim.display_topo_details()
-    #mySim.main_course()
+    mySim.main_course()
 
     #myEvent = EvFlowArrival(src_ip=na.IPAddress(1), dst_ip=na.IPAddress(2))
     #myEvent = EvFlowInstall(evtime=12345.0)

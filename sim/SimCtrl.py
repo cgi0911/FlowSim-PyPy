@@ -20,6 +20,8 @@ class SimCtrl:
 
     Attributes:
         topo (networkx.Graph): Network topology as an undirected graph.
+        hosts (dict): Hosts database. Key: Host IP, Value: attached edge switch.
+                      Directly copy-assigned during SimCtrl.__init__()
         path_db (dict): Path database. key: flow (2-tuple), value: list of paths.
                         Can be constructed by k-path, ECMP or shortest path.
 
@@ -40,8 +42,15 @@ class SimCtrl:
         self.topo.add_nodes_from(sim_core.topo.nodes())
         self.topo.add_edges_from(sim_core.topo.edges())
 
+        # ---- Hosts database ----
+        self.hosts = sim_core.hosts     # direct copy
+
         # ---- Build k-path database ----
         self.path_db = self.setup_path_db()
+
+
+    def __str__(self):
+        return "Controller"
 
 
     def setup_path_db(self, k=K_PATH, mode=ROUTING_MODE):

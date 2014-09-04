@@ -61,6 +61,7 @@ class EvFlowArrival(SimEvent):
         dst_ip (netaddr.ip.IPAddress): Destination IP
         flow_size (float64): Number of bytes to be transmitted in this flow.
         flow_rate (float64): The maximum data rate (bytes per sec) this flow can transmit.
+                             Currently not supported.
     """
 
     def __init__(self, **kwargs):

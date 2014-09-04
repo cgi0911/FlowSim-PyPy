@@ -10,10 +10,13 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 import os
 import csv
 from heapq import heappush, heappop
+from math import ceil, log
+from time import time
 # Third-party modules
 import networkx as nx
 import netaddr as na
 import pandas as pd
+import numpy as np
 # User-defined modules
 from config import *
 from SimCtrl import *
@@ -33,6 +36,7 @@ class SimCore:
         ev_queue (list of 2-tuples): Event queue. Each element is a 2-tuple of (evtime, event obj)
         nodes_df (pandas.DataFrame): A dataframe that contains switching nodes' names and params.
         links_df (pandas.DataFrame): A dataframe that contains links' names and params.
+        hosts (dict of netaddr.IpAddress): Key is host IP, value is its edge switch
         link_util_recs (list of np.array): List of link utilization records.
         table_util_recs (list of np.array): List of table utilization records.
         flow_stats_recs (list of np.array): List of flow stats records.
@@ -56,27 +60,27 @@ class SimCore:
         self.sim_time = SIM_TIME
         self.timer = 0.0
         self.ev_queue = []
-
-        self.topo = nx.Graph()
+        np.random.seed(int(time()*100))
 
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
+        self.topo = nx.Graph()
         fn_nodes = os.path.join(DIR_TOPO, 'nodes.csv')
         fn_links = os.path.join(DIR_TOPO, 'links.csv')
         self.nodes_df = pd.read_csv(fn_nodes, index_col=False)
         self.links_df = pd.read_csv(fn_links, index_col=False)
         self.df_to_topo(self.nodes_df, self.links_df)   # Translate pd.DataFrame into networkx.Graph
 
+        # ---- Create hosts, assign edge switches * IPs ----
+        self.hosts = {}
+        self.create_hosts()
+
         # ---- Simulator components ----
         # SimController: Currently assume one omniscient controller
-        # SimFlowGen:
+        # SimFlowGen: One instance
         # SimSwitch instances are instantiated in df_to_topo
         # SimLink instances are instantitated in df_to_topo
         self.ctrl = SimCtrl(self)
-        self.flowgen = SimFlowGen()
-
-
-
-        # ---- Generate hosts, assign IP addresses and map hosts to their edge switches ----
+        self.flowgen = SimFlowGen(self)
 
         # ---- Bookkeeping, framing and logging ----
         self.link_util_recs = []
@@ -117,15 +121,18 @@ class SimCore:
             self.topo.add_edge(node1, node2, item=SimLink(**rowdict))
 
 
-    def gen_init_flows(self):
-        """Generate initial flows. Called at start of simulation loop.
-
-        Args:
-
-        Returns:
-
+    def create_hosts(self):
+        """Create hosts, bind hosts to edge switches, and assign IPs.
         """
-        pass
+        base_ip = na.IPAddress('10.0.0.1')
+        for nd in self.topo.nodes():
+            n_hosts = self.topo.node[nd]['item'].n_hosts
+            self.topo.node[nd]['item'].base_ip = base_ip
+            self.topo.node[nd]['item'].end_ip = base_ip + n_hosts - 1
+            for i in range(n_hosts):
+                myIP = base_ip + i
+                self.hosts[myIP] = nd
+            base_ip = base_ip + 2 ** int(ceil(log(n_hosts, 2)))  # Shift base_ip by an entire IP segment
 
 
     def main_course(self):
@@ -137,7 +144,7 @@ class SimCore:
 
         """
         # Step 1: Generate initial set of flows and queue them as FlowArrival events
-        self.gen_init_flows()
+        self.flowgen.gen_init_flows(self.ev_queue)
 
         # Step 2: Initialize logging
         # self.init_logging()
@@ -154,9 +161,12 @@ class SimCore:
         # Step 4: Main loop of simulation
         while (self.timer <= self.sim_time):
             try:
-                event = heappop(ev_queue)
+                event_tuple = heappop(self.ev_queue)
+                self.timer = event_tuple[0]
+                event = event_tuple[1]
+                print self.timer, event
             except:
                 print ('heappop error!')
-            pass
+                break
 
 
