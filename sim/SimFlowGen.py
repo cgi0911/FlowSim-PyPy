@@ -40,7 +40,7 @@ class SimFlowGen:
         dst = ''
         while True:
             dst = rd.choice(self.hosts.keys())
-            if (not dst == src):
+            if (not self.hosts[dst] == self.hosts[src]):
                 break
         return dst
 

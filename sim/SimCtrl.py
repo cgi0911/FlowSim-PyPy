@@ -8,6 +8,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # Built-in modules
 from time import *
+import random as rd
 # Third-party modules
 import networkx as nx
 import pprint as pp
@@ -37,10 +38,8 @@ class SimCtrl:
             sim_core (Instance of SimCore): Refers to simulation core module.
 
         """
-        # ---- Initialize topology graph according to SimCore's topology ----
-        self.topo = nx.Graph()
-        self.topo.add_nodes_from(sim_core.topo.nodes())
-        self.topo.add_edges_from(sim_core.topo.edges())
+        # ---- Initialize topology graph by copying SimCore's topology ----
+        self.topo = sim_core.topo
 
         # ---- Hosts database ----
         self.hosts = sim_core.hosts     # direct copy
@@ -205,6 +204,18 @@ class SimCtrl:
         return [path]
 
 
+    def is_feasible(self, path):
+        """Check if path is feasible (without table overflow).
+        """
+        ret = True
+        for node in path:
+            if (self.topo.node[node]['item'].get_usage() >= \
+                self.topo.node[node]['item'].table_size ):
+                ret = False
+                break
+        return ret
+
+
     def find_path_ecmp(self, src_node, dst_node):
         """ECMP routing: randomly choose among several ECMP routes.
         """
@@ -212,7 +223,7 @@ class SimCtrl:
         feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
                           if ( self.is_feasible(path) == True )]
         # Return a random choice
-        return random.choice(feasible_paths)
+        return rd.choice(feasible_paths)
 
 
     def find_path(self, src_ip, dst_ip):
@@ -234,3 +245,4 @@ class SimCtrl:
             path = self.find_path_ecmp(src_node, dst_node)
         else:
             path = self.find_path_ecmp(src_node, dst_node)
+        return path

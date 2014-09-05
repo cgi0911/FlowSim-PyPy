@@ -165,33 +165,30 @@ class SimCore:
 
         # Step 4: Main loop of simulation
         while (self.timer <= self.sim_time):
-            try:
-                event_tuple = heappop(self.ev_queue)
-                ev_time = event_tuple[0]
-                event = event_tuple[1]
-                ev_type = event.ev_type
+            event_tuple = heappop(self.ev_queue)
+            ev_time = event_tuple[0]
+            event = event_tuple[1]
+            ev_type = event.ev_type
 
-                print event
+            print event
 
-                # ---- Handle Events ----
-                # Handle EvFlowArrival
-                if (ev_type == 'EvFlowArrival'):                    
-                    self.handle_EvFlowArrival(ev_time, event)
+            # ---- Handle Events ----
+            # Handle EvFlowArrival
+            if (ev_type == 'EvFlowArrival'):                    
+                self.handle_EvFlowArrival(ev_time, event)
 
-                # Handle EvPacketIn
-                elif (ev_type == 'EvPacketIn'):
-                    self.handle_EvPacketIn(ev_time, event)
+            # Handle EvPacketIn
+            elif (ev_type == 'EvPacketIn'):
+                self.handle_EvPacketIn(ev_time, event)
 
-                # Handle EvFlowInstall
-                elif (ev_type == 'EvFlowInstall'):
-                    self.handle_EvFlowInstall(ev_time, event)
-                # Handle EvFlowEnd
-                # Handle EvIdleTimeout
-                # Handle EvHardTimeout
-                # Handle EvPullStats
-            except:
-                print ('heappop error!')
-                break
+            # Handle EvFlowInstall
+            elif (ev_type == 'EvFlowInstall'):
+                self.handle_EvFlowInstall(ev_time, event)
+            # Handle EvFlowEnd
+            # Handle EvIdleTimeout
+            # Handle EvHardTimeout
+            # Handle EvPullStats
+            # Handle EvReroute            
 
 
     def handle_EvFlowArrival(self, ev_time, event):
@@ -219,8 +216,10 @@ class SimCore:
 
         # EvPacketIn event
         new_ev_time = ev_time + SW_CTRL_DELAY
-        new_event = EvPacketIn(ev_time=new_ev_time, src_ip=event.src_ip, \
-                               dst_ip=event.dst_ip) 
+        new_event = EvPacketIn(ev_time=new_ev_time, \
+                               src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                               src_node=self.hosts[event.src_ip], \
+                               dst_node=self.hosts[event.dst_ip]) 
         heappush(self.ev_queue, (new_ev_time, new_event))        
 
 
@@ -241,8 +240,8 @@ class SimCore:
 
         """
         # The controller finds a path
-        #path = self.ctrl.find_path()
-        pass
+        path = self.ctrl.find_path(event.src_ip, event.dst_ip)
+        
 
 
     def handle_EvFlowInstall(self, ev_time, event):
@@ -300,7 +299,7 @@ class SimCore:
 
     def handle_EvPullStats(self, ev_time, event):
         """Handle an EvPullStats event.
-        1. The central controller
+        1. The central controller pulls stats.
 
         Args:
             ev_time (float64): Event time
@@ -311,4 +310,21 @@ class SimCore:
 
 
         """
+        pass
 
+
+    def handle_EvReroute(self, ev_time, event):
+        """Handle an EvReroute event.
+        1. The central controller does reroute.
+        2. Update the SimCore's flow statistics.
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+
+        """
+        pass

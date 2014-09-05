@@ -85,6 +85,8 @@ class EvPacketIn(SimEvent):
         SimEvent.__init__(self, ev_type='EvPacketIn', ev_time=kwargs.get('ev_time', 0.0))
         self.src_ip = kwargs.get('src_ip', na.IPAddress(0))
         self.dst_ip = kwargs.get('dst_ip', na.IPAddress(0))
+        self.src_node = kwargs.get('src_node', 'unknown')
+        self.dst_node = kwargs.get('dst_node', 'unknown')
 
 
 class EvFlowInstall(SimEvent):
