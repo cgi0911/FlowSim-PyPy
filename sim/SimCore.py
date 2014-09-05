@@ -21,6 +21,7 @@ import numpy as np
 from config import *
 from SimCtrl import *
 from SimFlowGen import *
+from SimFlow import *
 from SimSwitch import *
 from SimLink import *
 from SimEvent import *
@@ -33,10 +34,11 @@ class SimCore:
         sim_time (float64): Total simulation time
         timer (float64): Simulation timer, which keeps current time progress
         topo (networkx.Graph): An undirected graph to keep network topology
-        ev_queue (list of 2-tuples): Event queue. Each element is a 2-tuple of (evtime, event obj)
+        ev_queue (list of 2-tuples): Event queue. Each element is a 2-tuple of (ev_time, event obj)
         nodes_df (pandas.DataFrame): A dataframe that contains switching nodes' names and params.
         links_df (pandas.DataFrame): A dataframe that contains links' names and params.
         hosts (dict of netaddr.IpAddress): Key is host IP, value is its edge switch
+        flows (dict of 2-tuples): Key is 2-tuple of flow src/dst, value is its associated SimFlow
         link_util_recs (list of np.array): List of link utilization records.
         table_util_recs (list of np.array): List of table utilization records.
         flow_stats_recs (list of np.array): List of flow stats records.
@@ -81,6 +83,9 @@ class SimCore:
         # SimLink instances are instantitated in df_to_topo
         self.ctrl = SimCtrl(self)
         self.flowgen = SimFlowGen(self)
+
+        # ---- Keeping flow records ----
+        self.flows = {}     # Empty dict at first.
 
         # ---- Bookkeeping, framing and logging ----
         self.link_util_recs = []
@@ -144,7 +149,7 @@ class SimCore:
 
         """
         # Step 1: Generate initial set of flows and queue them as FlowArrival events
-        self.flowgen.gen_init_flows(self.ev_queue)
+        self.flowgen.gen_init_flows(self.ev_queue)        
 
         # Step 2: Initialize logging
         # self.init_logging()
@@ -162,11 +167,148 @@ class SimCore:
         while (self.timer <= self.sim_time):
             try:
                 event_tuple = heappop(self.ev_queue)
-                self.timer = event_tuple[0]
+                ev_time = event_tuple[0]
                 event = event_tuple[1]
-                print self.timer, event
+                ev_type = event.ev_type
+
+                print event
+
+                # ---- Handle Events ----
+                # Handle EvFlowArrival
+                if (ev_type == 'EvFlowArrival'):                    
+                    self.handle_EvFlowArrival(ev_time, event)
+
+                # Handle EvPacketIn
+                elif (ev_type == 'EvPacketIn'):
+                    self.handle_EvPacketIn(ev_time, event)
+
+                # Handle EvFlowInstall
+                elif (ev_type == 'EvFlowInstall'):
+                    self.handle_EvFlowInstall(ev_time, event)
+                # Handle EvFlowEnd
+                # Handle EvIdleTimeout
+                # Handle EvHardTimeout
+                # Handle EvPullStats
             except:
                 print ('heappop error!')
                 break
 
+
+    def handle_EvFlowArrival(self, ev_time, event):
+        """Handle an EvFlowArrival event.
+        1. Enqueue an EvPacketIn event after SW_CTRL_DELAY
+        2. Add a SimFlow instance to self.flows, and mark the flow's status as 'requesting'
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+        """
+        # Create SimFlow instance        
+        flow_obj = SimFlow(src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                           src_node=self.hosts[event.src_ip], \
+                           dst_node=self.hosts[event.dst_ip], \
+                           flow_size=event.flow_size, flow_rate=event.flow_rate, \
+                           bytes_left=event.flow_size, \
+                           arrive_time=ev_time, update_time=ev_time, \
+                           status='requesting' )
+        self.flows[(event.src_ip, event.dst_ip)] = flow_obj
+
+        # EvPacketIn event
+        new_ev_time = ev_time + SW_CTRL_DELAY
+        new_event = EvPacketIn(ev_time=new_ev_time, src_ip=event.src_ip, \
+                               dst_ip=event.dst_ip) 
+        heappush(self.ev_queue, (new_ev_time, new_event))        
+
+
+    def handle_EvPacketIn(self, ev_time, event):
+        """Handle an EvPacketIn event.
+        1. The controller finds a path for the specified flow.
+        2. If a feasible path is found, schedule a EvFlowInstall accordingly,
+           after CTRL_SW_DELAY.
+           If not, reject the PacketIn, and re-schedule a EvFlowArrival after
+           REJECT_TIMEOUT.
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+        """
+        # The controller finds a path
+        #path = self.ctrl.find_path()
+        pass
+
+
+    def handle_EvFlowInstall(self, ev_time, event):
+        """Handle an EvFlowInstall event.
+        1. Double check if there is any flow table overflow along the selected path.
+        2. If not, SimSwitch instances on path will install flow entries. Mark the 
+           flow's status as 'active'.
+           If yes, reject the EvFlowInstall, and re-schedule a EvFlowArrival after
+           REJECT_TIMEOUT.
+        3. Update the SimCore's flow statistics.
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+        """
+        pass
+
+
+    def handle_EvFlowEnd(self, ev_time, event):
+        """Handle an EvFlowEnd event.
+        1. Schedule an EvIdleTimeout event, after IDLE_TIMEOUT.
+        2. Mark the flow's status as 'idle'.
+        3. Update the SimCore's flow statistics.
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+        """
+        pass
+
+
+    def handle_EvIdleTimeout(self, ev_time, event):
+        """Handle an EvIdleTimeout event.
+        1. Remove the flow from self.flows.
+        2. Remove the flow entries from path switches.
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+        """
+        pass
+
+
+    def handle_EvPullStats(self, ev_time, event):
+        """Handle an EvPullStats event.
+        1. The central controller
+
+        Args:
+            ev_time (float64): Event time
+            event (Instance inherited from SimEvent): FlowArrival event
+
+        Return:
+            None. Will schedule events to self.ev_queue if necessary.
+
+
+        """
 

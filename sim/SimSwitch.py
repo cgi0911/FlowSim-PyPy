@@ -44,3 +44,7 @@ class SimSwitch:
               '    end_ip: %s\n'                    %(self.end_ip) + \
               '    current # of entries: %s\n'      %(len(self.table))
         return ret
+
+
+    def get_usage(self):
+        return len(self.table)

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-"""
-config.py: Configuration file. Contains the parameter needed.
+"""config.py: Configuration file. Contains the parameter needed.
 """
 __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
@@ -42,6 +41,13 @@ LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL =  1
 LOG_FLOW_STATS = 1
 LOG_SUMMARIES = 1
+
+# ----------------------------------------
+# Time-related parameters
+# ----------------------------------------
+SW_CTRL_DELAY = 0.005           # Switch-to-controller delay
+CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
+REJECT_TIMEOUT = 0.100          # Timeout for flow re-request if rejected due to overflow
 
 # ---- Flowgen Options ----
 FLOW_DST_MODEL = 'uniform'      # Uniform: Randomly pick one non-src

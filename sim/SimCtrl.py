@@ -78,14 +78,14 @@ class SimCtrl:
             for dst in sorted(self.topo.nodes()):
                 if (not src == dst):
                     if (mode == 'yen'):
-                        path_db[(src, dst)] = self.find_path_yen(src, dst, k=k)
+                        path_db[(src, dst)] = self.build_pathset_yen(src, dst, k=k)
                     elif (mode == 'ecmp'):
-                        path_db[(src, dst)] = self.find_path_ecmp(src, dst)
+                        path_db[(src, dst)] = self.build_pathset_ecmp(src, dst)
                     elif (mode == 'spf'):
-                        path_db[(src, dst)] = self.find_path_spf(src, dst)
+                        path_db[(src, dst)] = self.build_pathset_spf(src, dst)
                     else:
                         # Default to spf
-                        path_db[(src, dst)] = self.find_path_spf(src, dst)
+                        path_db[(src, dst)] = self.build_pathset_spf(src, dst)
 
         return path_db
 
@@ -102,7 +102,7 @@ class SimCtrl:
             print
 
 
-    def find_path_yen(self, src, dst, k=K_PATH):
+    def build_pathset_yen(self, src, dst, k=K_PATH):
         """Yen's algorithm for building k-path.
         Please refer to Yen's paper.
 
@@ -173,7 +173,7 @@ class SimCtrl:
         return confirmed_paths
 
 
-    def find_path_ecmp(self, src, dst):
+    def build_pathset_ecmp(self, src, dst):
         """Find all lowest equal-cost paths from src to dst. The cost is hop count.
 
         Args:
@@ -190,7 +190,7 @@ class SimCtrl:
         return ret
 
 
-    def find_path_spf(self, src, dst):
+    def build_pathset_spf(self, src, dst):
         """Find a shortest path from src to dst.
 
         Args:
@@ -205,3 +205,32 @@ class SimCtrl:
         return [path]
 
 
+    def find_path_ecmp(self, src_node, dst_node):
+        """ECMP routing: randomly choose among several ECMP routes.
+        """
+        # First check for feasibility of path. Make sure no overflow.
+        feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
+                          if ( self.is_feasible(path) == True )]
+        # Return a random choice
+        return random.choice(feasible_paths)
+
+
+    def find_path(self, src_ip, dst_ip):
+        """Given src and dst IPs, find a feasible path in between.
+        1. Path is selected according to routing mode.
+        2. Path is described as a list of node names (strings).
+        3. If no feasible path (due to table overflow), return [].
+
+        Args:
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+
+        return:
+
+        """
+        src_node = self.hosts[src_ip]
+        dst_node = self.hosts[dst_ip]
+        if (ROUTING_MODE == 'ecmp'):
+            path = self.find_path_ecmp(src_node, dst_node)
+        else:
+            path = self.find_path_ecmp(src_node, dst_node)
