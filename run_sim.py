@@ -18,3 +18,4 @@ from sim.SimCore import *
 if __name__ == '__main__':
     mySim = SimCore()
     mySim.main_course()
+    # Run main course
