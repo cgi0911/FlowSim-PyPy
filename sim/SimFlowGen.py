@@ -28,7 +28,7 @@ class SimFlowGen:
 
 
     def pick_dst(self, src):
-        if (FLOW_DST_MODEL == 'uniform'):
+        if (cfg.FLOW_DST_MODEL == 'uniform'):
             dst = self.pick_dst_uniform(src)
         else:
             # Default to 'uniform'
@@ -56,15 +56,15 @@ class SimFlowGen:
 
         """
         ret = 0.0
-        if (FLOW_SIZE_MODEL == 'uniform'):
-            ret = self.get_flow_size_uniform(FLOW_SIZE_LOW, FLOW_SIZE_HIGH)
+        if (cfg.FLOW_SIZE_MODEL == 'uniform'):
+            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LOW, cfg.FLOW_SIZE_HIGH)
         else:
             # Default to 'uniform'
-            ret = self.get_flow_size_uniform(FLOW_SIZE_LOW, FLOW_SIZE_HIGH)
+            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LOW, cfg.FLOW_SIZE_HIGH)
         return ret
 
 
-    def get_flow_size_uniform(self, low=FLOW_SIZE_LOW, high=FLOW_SIZE_HIGH):
+    def get_flow_size_uniform(self, low=cfg.FLOW_SIZE_LOW, high=cfg.FLOW_SIZE_HIGH):
         """Generate flow size according to uniform random model
 
         Args:
@@ -90,15 +90,15 @@ class SimFlowGen:
 
         """
         ret = 0.0
-        if (FLOW_RATE_MODEL == 'uniform'):
-            ret = self.get_flow_rate_uniform(FLOW_RATE_LOW, FLOW_RATE_HIGH)
+        if (cfg.FLOW_RATE_MODEL == 'uniform'):
+            ret = self.get_flow_rate_uniform(cfg.FLOW_RATE_LOW, cfg.FLOW_RATE_HIGH)
         else:
             # Default to 'uniform'
-            ret = get_flow_rate_uniform(FLOW_RATE_LOW, FLOW_RATE_HIGH)
+            ret = get_flow_rate_uniform(cfg.FLOW_RATE_LOW, cfg.FLOW_RATE_HIGH)
         return ret
 
 
-    def get_flow_rate_uniform(self, low=FLOW_SIZE_LOW, high=FLOW_SIZE_HIGH):
+    def get_flow_rate_uniform(self, low=cfg.FLOW_SIZE_LOW, high=cfg.FLOW_SIZE_HIGH):
         """Generate flow rate according to uniform random model
 
         Args:
@@ -130,9 +130,9 @@ class SimFlowGen:
         Args:
             ev_queue (list of instances inherited from SimEvent): Event queue
         """
-        if (FLOW_INTARR_MODEL == 'saturate'):
+        if (cfg.FLOW_INTARR_MODEL == 'saturate'):
             for hst in self.hosts:
-                ev_time = np.random.uniform(0.0, LATEST_INIT_FLOW_TIME)
+                ev_time = np.random.uniform(0.0, cfg.LATEST_INIT_FLOW_TIME)
                 event = self.gen_new_flow_with_src(hst)
                 event.ev_time = ev_time
                 heappush(ev_queue, (ev_time, event))

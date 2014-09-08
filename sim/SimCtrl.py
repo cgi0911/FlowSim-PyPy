@@ -158,7 +158,7 @@ class SimCtrl:
         return ret
 
 
-    def setup_path_db(self, k=K_PATH, mode=ROUTING_MODE):
+    def setup_path_db(self, k=cfg.K_PATH, mode=cfg.ROUTING_MODE):
         """Build k-path database for all src-dst node pairs in topology.
 
         Args:
@@ -207,7 +207,7 @@ class SimCtrl:
             print
 
 
-    def build_pathset_yen(self, src, dst, k=K_PATH):
+    def build_pathset_yen(self, src, dst, k=cfg.K_PATH):
         """Yen's algorithm for building k-path.
         Please refer to Yen's paper.
 
@@ -222,7 +222,7 @@ class SimCtrl:
         """
         st_time = time()
 
-        if (SHOW_K_PATH_CONSTRUCTION > 0):
+        if (cfg.SHOW_K_PATH_CONSTRUCTION > 0):
             print "Finding %d paths from %s to %s" %(k, src, dst)
 
         confirmed_paths = []
@@ -351,7 +351,7 @@ class SimCtrl:
         """
         src_node = self.hosts[src_ip]
         dst_node = self.hosts[dst_ip]
-        if (ROUTING_MODE == 'ecmp'):
+        if (cfg.ROUTING_MODE == 'ecmp'):
             path = self.find_path_ecmp(src_node, dst_node)
         else:
             path = self.find_path_ecmp(src_node, dst_node)

@@ -29,10 +29,10 @@ class SimSwitch:
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', 'noname')
         self.table = {}     # key is 2-tuple (src_ip, dst_ip), value is byte counter
-        self.table_size = kwargs.get('table_size', 1000) if (not OVERRIDE_TABLESIZE)    \
-                          else TABLESIZE_PER_SW
-        self.n_hosts = kwargs.get('n_hosts', 100) if (not OVERRIDE_N_HOSTS)     \
-                       else N_HOSTS_PER_SW
+        self.table_size = kwargs.get('table_size', 1000) if (not cfg.OVERRIDE_TABLESIZE)    \
+                          else cfg.TABLESIZE_PER_SW
+        self.n_hosts = kwargs.get('n_hosts', 100) if (not cfg.OVERRIDE_N_HOSTS)     \
+                       else cfg.N_HOSTS_PER_SW
         self.base_ip = na.IPAddress(0)
         self.end_ip = na.IPAddress(0)
 

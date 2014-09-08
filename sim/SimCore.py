@@ -7,17 +7,20 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
 # Built-in modules
+print "SimCore: Loading built-in modules."
 import os
 import csv
 from heapq import heappush, heappop
 from math import ceil, log
 from time import time
 # Third-party modules
+print "SimCore: Loading third-party modules."
 import networkx as nx
 import netaddr as na
 import pandas as pd
 import numpy as np
 # User-defined modules
+print "SimCore: Loading user-defined modules."
 from config import *
 from SimCtrl import *
 from SimFlowGen import *
@@ -60,15 +63,15 @@ class SimCore:
 
         """
         # ---- Simulator timer and counters ----
-        self.sim_time = SIM_TIME
+        self.sim_time = cfg.SIM_TIME
         self.timer = 0.0
         self.ev_queue = []
         np.random.seed(int(time()*100))
 
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
         self.topo = nx.Graph()
-        fn_nodes = os.path.join(DIR_TOPO, 'nodes.csv')
-        fn_links = os.path.join(DIR_TOPO, 'links.csv')
+        fn_nodes = os.path.join(cfg.DIR_TOPO, 'nodes.csv')
+        fn_links = os.path.join(cfg.DIR_TOPO, 'links.csv')
         self.nodes_df = pd.read_csv(fn_nodes, index_col=False)
         self.links_df = pd.read_csv(fn_links, index_col=False)
         self.df_to_topo(self.nodes_df, self.links_df)   # Translate pd.DataFrame into networkx.Graph
@@ -246,7 +249,7 @@ class SimCore:
         self.flows[(event.src_ip, event.dst_ip)] = flow_obj
 
         # EvPacketIn event
-        new_ev_time = ev_time + SW_CTRL_DELAY
+        new_ev_time = ev_time + cfg.SW_CTRL_DELAY
         new_event = EvPacketIn(ev_time=new_ev_time, \
                                src_ip=event.src_ip, dst_ip=event.dst_ip, \
                                src_node=self.hosts[event.src_ip], \
@@ -274,17 +277,17 @@ class SimCore:
         path = self.ctrl.find_path(event.src_ip, event.dst_ip)
 
         if (path == []):
-            if (SHOW_REJECTS > 0):
+            if (cfg.SHOW_REJECTS > 0):
                 print 'Flow (%s, %s) is rejected. No available path.' %(event.src_ip, event.dst_ip)
                 print
             # Re-send this EvPacketIn after REJECT_TIMEOUT (don't forget SW_CTRL_DELAY!)
-            new_ev_time = ev_time + REJECT_TIMEOUT + SW_CTRL_DELAY
+            new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
             new_event = event
             new_event.ev_time = new_ev_time
             new_event.resend += 1   # Increment resend counter
             heappush(self.ev_queue, (new_ev_time, new_event))
         else:
-            new_ev_time = ev_time + CTRL_SW_DELAY
+            new_ev_time = ev_time + cfg.CTRL_SW_DELAY
             new_event = EvFlowInstall(ev_time=new_ev_time, \
                                       src_ip=event.src_ip, dst_ip=event.dst_ip, \
                                       src_node=event.src_node, dst_node=event.dst_node, \
@@ -321,11 +324,11 @@ class SimCore:
             # !! SimCore update here !!
 
         else:
-            if (SHOW_REJECTS > 0):
+            if (cfg.SHOW_REJECTS > 0):
                 print 'Flow (%s, %s) is rejected. Overflow detected during installation' \
                         %(event.src_ip, event.dst_ip)
                 print
-            new_ev_time = ev_time + REJECT_TIMEOUT + SW_CTRL_DELAY
+            new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
             new_event = EvPacketIn(ev_time=new_ev_time, \
                                    src_ip=event.src_ip, dst_ip=event.dst_ip, \
                                    src_node=event.src_node, dst_node=event.dst_node, \
@@ -445,7 +448,7 @@ class SimCore:
 
             self.timer = ev_time
 
-            if (SHOW_EVENTS > 0):
+            if (cfg.SHOW_EVENTS > 0):
                 print '%.6f' %(ev_time)
                 print event
 
