@@ -8,11 +8,11 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # ---- Frequently Used ----
 DIR_TOPO = './topologies/geant'
-SIM_TIME = 60.0
+SIM_TIME = 0.5
 
 
 # ----
-OVERRIDE_TABLESIZE = False
+OVERRIDE_TABLESIZE = True
 TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
@@ -29,7 +29,8 @@ K_PATH = 4                      # Number of predefined path per src-dst pair
 
 # ---- Logging Options ----
 SHOW_PROGRESS = 0
-SHOW_EVENTS = 0
+SHOW_EVENTS = 1
+SHOW_REJECTS = 1
 SHOW_K_PATH_CONSTRUCTION = 0
 SHOW_LINK_CONGESTION = 0
 SHOW_TABLE_OVERFLOW = 0

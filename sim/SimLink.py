@@ -28,11 +28,12 @@ class SimLink:
         self.flows = []
 
     def __str__(self):
-        ret = 'Link (%s, %s):\n'                    %(self.node1, self.node2) +     \
-              '    cap: %.6e\n'                     %(self.cap) +   \
-              '    # of registered flows:%d\n'      %(len(self.flows)) +  \
-              '    # of active flows:%d\n'          %(len([fl for fl in self.flows \
+        ret =   'Link (%s, %s):\n'                    %(self.node1, self.node2) +     \
+                '\tcap: %.6e\n'                       %(self.cap) +   \
+                '\t# of registered flows:%d\n'        %(len(self.flows)) +  \
+                '\t# of active flows:%d\n'            %(len([fl for fl in self.flows \
                                                            if fl.status=='active']))+  \
-              '    # of idling flows:%d\n'          %(len([fl for fl in self.flows \
+                '\t# of idling flows:%d\n'            %(len([fl for fl in self.flows \
                                                            if fl.status=='idle']))
         return ret
+

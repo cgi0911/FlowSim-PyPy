@@ -17,7 +17,8 @@ class SimSwitch:
     """Class of a switching node in the network.
 
     Attributes:
-        table (dict: 2-tuple netaddr.IpAddress -> float64): Forwarding table
+        table (dict: 2-tuple netaddr.IpAddress -> float64):
+            Forwarding table, key is 2-tuple (src_ip, dst_ip) and value is byte counter.
         tablesize (int): Maximum number of flow entries allowed in table
         n_hosts (int): Number of hosts connected with this edge switch.
         base_ip
@@ -37,14 +38,26 @@ class SimSwitch:
 
 
     def __str__(self):
-        ret = 'Switch name %s\n'                    %(self.name) + \
-              '    table_size: %s\n'                %(self.table_size) + \
-              '    n_hosts: %s\n'                   %(self.n_hosts) + \
-              '    base_ip: %s\n'                   %(self.base_ip) + \
-              '    end_ip: %s\n'                    %(self.end_ip) + \
-              '    current # of entries: %s\n'      %(len(self.table))
+        ret =   'Switch name %s\n'                  %(self.name) + \
+                '\ttable_size: %s\n'                %(self.table_size) + \
+                '\tn_hosts: %s\n'                   %(self.n_hosts) + \
+                '\tbase_ip: %s\n'                   %(self.base_ip) + \
+                '\tend_ip: %s\n'                    %(self.end_ip) + \
+                '\tcurrent # of entries: %s\n'      %(len(self.table))
         return ret
 
 
     def get_usage(self):
         return len(self.table)
+
+
+    def install_entry(self, src_ip, dst_ip):
+        if (not (src_ip, dst_ip) in self.table):
+            self.table[(src_ip, dst_ip)] = 0.0
+
+
+    def remove_entry(self, src_ip, dst_ip):
+        del self.table[(src_ip, dst_ip)]
+        # Prevent exceptions??
+
+

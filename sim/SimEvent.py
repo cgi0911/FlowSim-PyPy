@@ -79,6 +79,9 @@ class EvPacketIn(SimEvent):
         ev_type (str): 'EvPacketIn'
         src_ip (netaddr.ip.IPAddress): Source IP
         dst_ip (netaddr.ip.IPAddress): Destination IP
+        src_node (string): Source SW
+        dst_node (string): Dest SW
+        resend (int): Resend times
     """
 
     def __init__(self, **kwargs):
@@ -87,6 +90,7 @@ class EvPacketIn(SimEvent):
         self.dst_ip = kwargs.get('dst_ip', na.IPAddress(0))
         self.src_node = kwargs.get('src_node', 'unknown')
         self.dst_node = kwargs.get('dst_node', 'unknown')
+        self.resend = 0
 
 
 class EvFlowInstall(SimEvent):
@@ -96,14 +100,20 @@ class EvFlowInstall(SimEvent):
         ev_type (str): 'EvFlowInstall'
         src_ip (netaddr.ip.IPAddress): Source IP
         dst_ip (netaddr.ip.IPAddress): Destination IP
+        src_node (string): Source SW
+        dst_node (string): Dest SW
         path (list of str): An ordered list of switch names along the path.
+        resend (int): Resend times
     """
 
     def __init__(self, **kwargs):
         SimEvent.__init__(self, ev_type='EvFlowInstall', ev_time=kwargs.get('ev_time', 0.0))
         self.src_ip = kwargs.get('src_ip', na.IPAddress(0))
         self.dst_ip = kwargs.get('dst_ip', na.IPAddress(0))
+        self.src_node = kwargs.get('src_node', 'unknown')
+        self.dst_node = kwargs.get('dst_node', 'unknown')
         self.path = kwargs.get('path', [])
+        self.resend = 0
 
 
 class EvFlowEnd(SimEvent):

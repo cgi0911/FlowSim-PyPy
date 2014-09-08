@@ -9,6 +9,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 from time import *
 import random as rd
+import copy as cp
 # Third-party modules
 import networkx as nx
 import pprint as pp
@@ -37,9 +38,33 @@ class SimCtrl:
         Args:
             sim_core (Instance of SimCore): Refers to simulation core module.
 
+        Extra Notes:
+            Note that the node/link states kept at controller may not be strictly
+            synchronized with SimCore! The states kept at controller are acquired by
+            pulling statistics from the network.
+
         """
         # ---- Initialize topology graph by copying SimCore's topology ----
-        self.topo = sim_core.topo
+        # self.topo = sim_core.topo
+        self.topo = nx.Graph()
+        self.topo.add_nodes_from(sim_core.topo.nodes())
+        self.topo.add_edges_from(sim_core.topo.edges())
+
+        for nd in self.topo.nodes():
+            #self.topo.node[nd]['table_size'] = sim_core.get_node_attr(nd, 'table_size')
+            #self.topo.node[nd]['usage'] = 0
+            self.set_node_attr(nd, 'table_size', sim_core.get_node_attr(nd, 'table_size'))
+            self.set_node_attr(nd, 'table', {})
+            #self.set_node_attr(nd, 'usage', 0)
+            #self.set_node_attr(nd, 'util', 0.0)
+
+        for lk in self.topo.edges():
+            #self.topo.edge[lk[0]][lk[1]]['cap'] = sim_core.get_edge_attr(lk[0], lk[1], 'cap')
+            #self.topo.edge[lk[0]][lk[1]]['usage'] = 0.0
+            #self.topo.edge[lk[0]][lk[1]]['util'] = 0.0  # util = usage/cap
+            self.set_link_attr(lk[0], lk[1], 'cap', sim_core.get_link_attr(lk[0], lk[1], 'cap'))
+            self.set_link_attr(lk[0], lk[1], 'usage', 0.0)
+            self.set_link_attr(lk[0], lk[1], 'util', 0.0)
 
         # ---- Hosts database ----
         self.hosts = sim_core.hosts     # direct copy
@@ -50,6 +75,87 @@ class SimCtrl:
 
     def __str__(self):
         return "Controller"
+
+
+    def get_node_attr(self, sw_name, attr_name):
+        """Get switch record (a.k.a. node) attribute by SW name and attribute name.
+
+        Args:
+            sw_name (string): Switch name
+            attr_name (string): Attribute name
+
+        Returns:
+            Variable type: Switch attribute
+
+        """
+        ret = self.topo.node[sw_name][attr_name]
+        return ret
+
+
+    def set_node_attr(self, sw_name, attr_name, val):
+        """Set switch record (a.k.a. node) attribute by SW name and attribute name.
+
+        Args:
+            sw_name (string): Switch name
+            attr_name (string): Attribute name
+            val (variable type): Set value
+
+        Returns:
+            None
+
+        """
+        self.topo.node[sw_name][attr_name] = val
+
+    def get_link_attr(self, node1, node2, attr_name):
+        """Get link record (a.k.a. edge) attribute by link node names and attribute name.
+
+        Args:
+            node1 (string): Name of link node 1
+            node2 (string): Name of link node 2
+                            Note that in nx.Graph, node1 and node2 are interchangeable.
+            attr_name (string): Attribute name
+
+        Returns:
+            Variable type: Link attribute
+
+        """
+        ret = self.topo.edge[node1][node2][attr_name]
+        return ret
+
+
+    def set_link_attr(self, node1, node2, attr_name, val):
+        """Set link record (a.k.a. edge) attribute by link node names and attribute name.
+
+        Args:
+            node1 (string): Name of link node 1
+            node2 (string): Name of link node 2
+                            Note that in nx.Graph, node1 and node2 are interchangeable.
+            attr_name (string): Attribute name
+            val (variable type): Set value
+
+        Returns:
+            None
+
+        """
+        self.topo.edge[node1][node2][attr_name] = val
+
+
+    def install_entry(self, sw_name, src_ip, dst_ip):
+        """Install a flow entry (src_ip, dst_ip) as we've done at the SimSwitch instances.
+
+        Args:
+            node (string): Name of node
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+
+        """
+        if (not sw_name in self.topo.node[sw_name]['table']):
+            self.topo.node[sw_name]['table'][(src_ip, dst_ip)] = 0.0    # Byte counter set to 0
+
+
+    def get_table_usage(self, sw_name):
+        ret = len(self.get_node_attr(sw_name, 'table'))
+        return ret
 
 
     def setup_path_db(self, k=K_PATH, mode=ROUTING_MODE):
@@ -208,9 +314,10 @@ class SimCtrl:
         """Check if path is feasible (without table overflow).
         """
         ret = True
-        for node in path:
-            if (self.topo.node[node]['item'].get_usage() >= \
-                self.topo.node[node]['item'].table_size ):
+        for nd in path:
+            usage = self.get_table_usage(nd)
+            table_size = self.get_node_attr(nd, 'table_size')
+            if (usage >= table_size):
                 ret = False
                 break
         return ret
@@ -223,7 +330,10 @@ class SimCtrl:
         feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
                           if ( self.is_feasible(path) == True )]
         # Return a random choice
-        return rd.choice(feasible_paths)
+        try:
+            return rd.choice(feasible_paths)
+        except:
+            return []   # No path available
 
 
     def find_path(self, src_ip, dst_ip):

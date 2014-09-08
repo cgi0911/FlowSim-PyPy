@@ -134,6 +134,7 @@ class SimFlowGen:
             for hst in self.hosts:
                 ev_time = np.random.uniform(0.0, LATEST_INIT_FLOW_TIME)
                 event = self.gen_new_flow_with_src(hst)
+                event.ev_time = ev_time
                 heappush(ev_queue, (ev_time, event))
         else:
             pass
