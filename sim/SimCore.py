@@ -48,7 +48,7 @@ class SimCore:
 
     Extra Notes:
         topo.node[node]['item'] (SimSwitch): Edge switch instances in the topology.
-        topo[node1][node2]['item'] (SimLink): Link instances in the topology.
+        topo.edge[node1][node2]['item'] (SimLink): Link instances in the topology.
 
     """
 
