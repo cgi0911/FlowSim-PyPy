@@ -41,7 +41,8 @@ class SimCore:
         nodes_df (pandas.DataFrame): A dataframe that contains switching nodes' names and params.
         links_df (pandas.DataFrame): A dataframe that contains links' names and params.
         hosts (dict of netaddr.IpAddress): Key is host IP, value is its edge switch
-        flows (dict of 2-tuples): Key is 2-tuple of flow src/dst, value is its associated SimFlow instance.
+        flows (dict of 2-tuples): Key is 2-tuple of flow src/dst, 
+                                  Value is its associated SimFlow instance.
         link_util_recs (list of np.array): List of link utilization records.
         table_util_recs (list of np.array): List of table utilization records.
         flow_stats_recs (list of np.array): List of flow stats records.

@@ -19,5 +19,5 @@ if __name__ == '__main__':
     mySim = SimCore()
     mySim.main_course()
     # Run main course
-    for nd in mySim.ctrl.topo.nodes():
-        print mySim.ctrl.topo.node[nd]
+    #for nd in mySim.ctrl.topo.nodes():
+    #    print mySim.ctrl.topo.node[nd]
