@@ -51,17 +51,14 @@ class SimCtrl:
         self.topo.add_edges_from(sim_core.topo.edges())
 
         for nd in self.topo.nodes():
-            #self.topo.node[nd]['table_size'] = sim_core.get_node_attr(nd, 'table_size')
-            #self.topo.node[nd]['usage'] = 0
             self.set_node_attr(nd, 'table_size', sim_core.get_node_attr(nd, 'table_size'))
-            self.set_node_attr(nd, 'table', {})
-            #self.set_node_attr(nd, 'usage', 0)
-            #self.set_node_attr(nd, 'util', 0.0)
+                                        # Table size, a.k.a. table capacity
+            self.set_node_attr(nd, 'cnt_table', {})
+                                        # Each node has a flow counter table.
+                                        # Key: (src_ip, dst_ip)
+                                        # Value: byte counter
 
         for lk in self.topo.edges():
-            #self.topo.edge[lk[0]][lk[1]]['cap'] = sim_core.get_edge_attr(lk[0], lk[1], 'cap')
-            #self.topo.edge[lk[0]][lk[1]]['usage'] = 0.0
-            #self.topo.edge[lk[0]][lk[1]]['util'] = 0.0  # util = usage/cap
             self.set_link_attr(lk[0], lk[1], 'cap', sim_core.get_link_attr(lk[0], lk[1], 'cap'))
             self.set_link_attr(lk[0], lk[1], 'usage', 0.0)
             self.set_link_attr(lk[0], lk[1], 'util', 0.0)
@@ -140,21 +137,23 @@ class SimCtrl:
         self.topo.edge[node1][node2][attr_name] = val
 
 
-    def install_entry(self, sw_name, src_ip, dst_ip):
+    def install_entry(self, path, src_ip, dst_ip):
         """Install a flow entry (src_ip, dst_ip) as we've done at the SimSwitch instances.
 
         Args:
-            node (string): Name of node
+            path (list of string): Path of the flow, represented by a list of sw names.
             src_ip (netaddr.IPAddress)
             dst_ip (netaddr.IPAddress)
 
         """
-        if (not sw_name in self.topo.node[sw_name]['table']):
-            self.topo.node[sw_name]['table'][(src_ip, dst_ip)] = 0.0    # Byte counter set to 0
+        for sw_name in path:
+            if (not sw_name in self.topo.node[sw_name]['cnt_table']):
+                self.topo.node[sw_name]['cnt_table'][(src_ip, dst_ip)] = 0.0
+                # Byte counter set to 0
 
 
     def get_table_usage(self, sw_name):
-        ret = len(self.get_node_attr(sw_name, 'table'))
+        ret = len(self.get_node_attr(sw_name, 'cnt_table'))
         return ret
 
 

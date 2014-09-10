@@ -8,7 +8,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # ---- Frequently Used ----
 DIR_TOPO = './topologies/geant'
-SIM_TIME = 0.5
+SIM_TIME = 1.0
 
 
 # ----

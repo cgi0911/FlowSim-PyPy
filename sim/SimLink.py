@@ -25,7 +25,7 @@ class SimLink:
         self.node2 = kwargs.get('node2', 'noname')
         self.cap = kwargs.get('cap', 1e9) if (not cfg.OVERRIDE_CAP)     \
                    else cfg.CAP_PER_LINK
-        self.flows = []
+        self.flows = {}
 
     def __str__(self):
         ret =   'Link (%s, %s):\n'                    %(self.node1, self.node2) +     \

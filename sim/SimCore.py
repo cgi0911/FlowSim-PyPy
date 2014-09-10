@@ -316,8 +316,9 @@ class SimCore:
 
         if (is_feasible == True):
             for nd in event.path:
+                # Install flow entries at switches along the path
                 self.topo.node[nd]['item'].install_entry(event.src_ip, event.dst_ip)
-                self.ctrl.install_entry(nd, event.src_ip, event.dst_ip)
+            self.ctrl.install_entry(event.path, event.src_ip, event.dst_ip)
             self.flows[(event.src_ip, event.dst_ip)].status = 'active'
             self.flows[(event.src_ip, event.dst_ip)].resend = event.resend
 
