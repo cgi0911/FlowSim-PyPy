@@ -210,6 +210,28 @@ class SimCore:
         setattr(self.topo.edge[node1][node2]['item'], attr_name, val)
 
 
+    def install_entries_to_path(self, path, src_ip, dst_ip):
+        """Install flow entries to the specified path.
+
+        Args:
+            path (list of string): Path of the flow
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+
+        Returns:
+            None
+
+        """
+        for nd in path:
+            self.topo.node[nd]['item'].install_entry(src_ip, dst_ip)
+
+        for i in range(len(path)-1):
+            #self.topo.edge[path[i]][path[i+1]]['item'].flows[(src_ip, dst_ip)] = \
+            #    self.flows[(src_ip, dst_ip)]
+            self.topo.edge[path[i]][path[i+1]]['item'].install_entry(src_ip, \
+                            dst_ip, self.flows[(src_ip, dst_ip)])
+
+
     def create_hosts(self):
         """Create hosts, bind hosts to edge switches, and assign IPs.
         """
@@ -218,8 +240,7 @@ class SimCore:
             n_hosts = self.topo.node[nd]['item'].n_hosts
             self.set_node_attr(nd, 'base_ip', base_ip)
             self.set_node_attr(nd, 'end_ip', base_ip + n_hosts - 1)
-            #self.topo.node[nd]['item'].base_ip = base_ip
-            #self.topo.node[nd]['item'].end_ip = base_ip + n_hosts - 1
+
             for i in range(n_hosts):
                 myIP = base_ip + i
                 self.hosts[myIP] = nd
@@ -316,12 +337,15 @@ class SimCore:
         is_feasible = self.ctrl.is_feasible(event.path)
 
         if (is_feasible == True):
-            for nd in event.path:
-                # Install flow entries at switches along the path
-                self.topo.node[nd]['item'].install_entry(event.src_ip, event.dst_ip)
+            # Register entries at SimSwitch & SimLink instances 
+            self.install_entries_to_path(event.path, event.src_ip, event.dst_ip)
+            # Register flow entries at controller
             self.ctrl.install_entry(event.path, event.src_ip, event.dst_ip)
+            # Update flow instance
             self.flows[(event.src_ip, event.dst_ip)].status = 'active'
             self.flows[(event.src_ip, event.dst_ip)].resend = event.resend
+            self.flows[(event.src_ip, event.dst_ip)].path = event.path
+            self.flows[(event.src_ip, event.dst_ip)].install_time = event.ev_time            
 
             # !! SimCore update here !!
 
@@ -371,6 +395,11 @@ class SimCore:
         """
         pass
 
+
+    def handle_EvHardTimeout(self, ev_time, event):
+        """Handle an EvHardTimeout event.
+        1. 
+        """
 
     def handle_EvPullStats(self, ev_time, event):
         """Handle an EvPullStats event.

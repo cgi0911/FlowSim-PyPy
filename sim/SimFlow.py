@@ -58,7 +58,8 @@ class SimFlow:
                  end_time = -1.0,
                  remove_time = -1.0,
                  update_time = -1.0,
-                 resend = 0):
+                 resend = 0,
+                 assigned = False):
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.src_node = src_node
@@ -76,6 +77,7 @@ class SimFlow:
         self.remove_time = remove_time
         self.update_time = update_time
         self.resend = resend
+        self.assigned = assigned
 
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line
@@ -94,7 +96,9 @@ class SimFlow:
               '    install_time: %.6f\n'  %(self.install_time) + \
               '    end_time: %.6f\n'      %(self.end_time) + \
               '    remove_time: %.6f\n'   %(self.remove_time) + \
-              '    update_time: %.6f\n'   %(self.update_time)
+              '    update_time: %.6f\n'   %(self.update_time) + \
+              '    resend: %d\n'          %(self.resend) + \
+              '    assigned: %s\n'        %(self.assigned)
 
         return ret
 
