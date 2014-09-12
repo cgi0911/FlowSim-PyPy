@@ -247,6 +247,17 @@ class SimCore:
             base_ip = base_ip + 2 ** int(ceil(log(n_hosts, 2)))  # Shift base_ip by an entire IP segment
 
 
+    def calc_flow_rates(self):
+        """Calculate flow rates (according to DevoFlow Algorithm 1).
+
+        Args:
+
+        Returns:
+
+        """
+        pass
+
+
     def handle_EvFlowArrival(self, ev_time, event):
         """Handle an EvFlowArrival event.
         1. Enqueue an EvPacketIn event after SW_CTRL_DELAY
@@ -348,6 +359,7 @@ class SimCore:
             self.flows[(event.src_ip, event.dst_ip)].install_time = event.ev_time            
 
             # !! SimCore update here !!
+            self.calc_flow_rates()
 
         else:
             if (cfg.SHOW_REJECTS > 0):

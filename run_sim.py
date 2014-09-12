@@ -19,7 +19,7 @@ if __name__ == '__main__':
     mySim = SimCore()
     mySim.main_course()
     # Run main course
-    #for fl in mySim.flows:
-    #    print mySim.flows[fl]
-    for lk in mySim.topo.edges():
-        print mySim.topo.edge[lk[0]][lk[1]]['item']
+    for fl in mySim.flows:
+        print mySim.flows[fl]
+    #for lk in mySim.topo.edges():
+    #    print mySim.topo.edge[lk[0]][lk[1]]['item']
