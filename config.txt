@@ -8,7 +8,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # ---- Frequently Used ----
 DIR_TOPO = './topologies/geant'
-SIM_TIME = 1.0
+SIM_TIME = 10.0
 
 
 # ----
@@ -29,7 +29,7 @@ K_PATH = 4                      # Number of predefined path per src-dst pair
 
 # ---- Logging Options ----
 SHOW_PROGRESS = 0
-SHOW_EVENTS = 0
+SHOW_EVENTS = 1
 SHOW_REJECTS = 1
 SHOW_K_PATH_CONSTRUCTION = 0
 SHOW_LINK_CONGESTION = 0
@@ -48,6 +48,7 @@ LOG_SUMMARIES = 1
 # ----------------------------------------
 SW_CTRL_DELAY = 0.005           # Switch-to-controller delay
 CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
+IDLE_TIMEOUT = 0.000			# Idle timeout
 REJECT_TIMEOUT = 0.100          # Timeout for flow re-request if rejected due to overflow
 
 # ---- Flowgen Options ----
@@ -63,3 +64,4 @@ FLOW_RATE_LOW = 5e6             # Applicable only to FLOW_RATE_MODEL='uniform'
 FLOW_RATE_HIGH = 10e6           # Applicable only to FLOW_RATE_MODEL='uniform'
 
 LATEST_INIT_FLOW_TIME = 1.0     # Latest initial flow arrival time
+FLOWGEN_DELAY = 0.1 			# When a host's flow ends, generate a new flow after this delay

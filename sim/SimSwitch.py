@@ -51,12 +51,12 @@ class SimSwitch:
         return len(self.table)
 
 
-    def install_entry(self, src_ip, dst_ip):
+    def install_flow_entry(self, src_ip, dst_ip):
         if (not (src_ip, dst_ip) in self.table):
             self.table[(src_ip, dst_ip)] = 0.0
 
 
-    def remove_entry(self, src_ip, dst_ip):
+    def remove_flow_entry(self, src_ip, dst_ip):
         del self.table[(src_ip, dst_ip)]
         # Prevent exceptions??
 

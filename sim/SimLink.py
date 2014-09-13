@@ -60,7 +60,7 @@ class SimLink:
 
         Return:
             int: # of active flows
-            
+
         """
         ret = 0
 
@@ -69,3 +69,9 @@ class SimLink:
                 ret += 1
 
         return ret
+
+
+    def remove_flow_entry(self, src_ip, dst_ip):
+        """
+        """
+        del self.flows[(src_ip, dst_ip)]
