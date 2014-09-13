@@ -13,7 +13,7 @@ SIM_TIME = 1.0
 
 # ----
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 10
+TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
@@ -29,7 +29,7 @@ K_PATH = 4                      # Number of predefined path per src-dst pair
 
 # ---- Logging Options ----
 SHOW_PROGRESS = 0
-SHOW_EVENTS = 1
+SHOW_EVENTS = 0
 SHOW_REJECTS = 1
 SHOW_K_PATH_CONSTRUCTION = 0
 SHOW_LINK_CONGESTION = 0

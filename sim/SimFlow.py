@@ -41,25 +41,25 @@ class SimFlow:
 
     """
 
-    def __init__(self,
-                 src_ip=na.IPAddress(0),
-                 dst_ip=na.IPAddress(0),
-                 src_node='',
-                 dst_node='',
-                 path=[],
-                 flow_size=0.0,
-                 flow_rate=0.0,
-                 curr_rate=0.0,
-                 bytes_left=0.0,
-                 bytes_sent=0.0,
-                 status='requesting',
-                 arrive_time = -1.0,
-                 install_time = -1.0,
-                 end_time = -1.0,
-                 remove_time = -1.0,
-                 update_time = -1.0,
-                 resend = 0,
-                 assigned = False):
+    def __init__(   self,
+                    src_ip=na.IPAddress(0),
+                    dst_ip=na.IPAddress(0),
+                    src_node='',
+                    dst_node='',
+                    path=[],
+                    flow_size=0.0,
+                    flow_rate=0.0,
+                    curr_rate=0.0,
+                    bytes_left=0.0,
+                    bytes_sent=0.0,
+                    status='requesting',
+                    arrive_time = -1.0,
+                    install_time = -1.0,
+                    end_time = -1.0,
+                    remove_time = -1.0,
+                    update_time = -1.0,
+                    resend = 0,
+                ):
         self.src_ip = src_ip
         self.dst_ip = dst_ip
         self.src_node = src_node
@@ -77,28 +77,25 @@ class SimFlow:
         self.remove_time = remove_time
         self.update_time = update_time
         self.resend = resend
-        self.assigned = assigned
 
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line
-        ret = 'Flow (%s -> %s)\n'         %(self.src_ip, self.dst_ip) + \
-              '    status: %s\n'          %(self.status) + \
-              '    src_node: %s\n'        %(self.src_node) + \
-              '    dst_node: %s\n'        %(self.dst_node) + \
-              '    path: %s\n'            %(self.path) + \
-              '    flow_size: %.6f\n'     %(self.flow_size) + \
-              '    flow_rate: %.6f\n'     %(self.flow_rate) + \
-              '    curr_rate: %.6f\n'     %(self.curr_rate) + \
-              '    bytes_left: %.6f\n'    %(self.bytes_left) + \
-              '    bytes_sent: %.6f\n'    %(self.bytes_sent) + \
-              '    bytes_sent: %.6f\n'    %(self.bytes_sent) + \
-              '    arrive_time: %.6f\n'   %(self.arrive_time) + \
-              '    install_time: %.6f\n'  %(self.install_time) + \
-              '    end_time: %.6f\n'      %(self.end_time) + \
-              '    remove_time: %.6f\n'   %(self.remove_time) + \
-              '    update_time: %.6f\n'   %(self.update_time) + \
-              '    resend: %d\n'          %(self.resend) + \
-              '    assigned: %s\n'        %(self.assigned)
+        ret =   'Flow (%s -> %s)\n'         %(self.src_ip, self.dst_ip) + \
+                '    status: %s\n'          %(self.status) + \
+                '    src_node: %s\n'        %(self.src_node) + \
+                '    dst_node: %s\n'        %(self.dst_node) + \
+                '    path: %s\n'            %(self.path) + \
+                '    flow_size: %.6f\n'     %(self.flow_size) + \
+                '    flow_rate: %.6f\n'     %(self.flow_rate) + \
+                '    curr_rate: %.6f\n'     %(self.curr_rate) + \
+                '    bytes_left: %.6f\n'    %(self.bytes_left) + \
+                '    bytes_sent: %.6f\n'    %(self.bytes_sent) + \
+                '    arrive_time: %.6f\n'   %(self.arrive_time) + \
+                '    install_time: %.6f\n'  %(self.install_time) + \
+                '    end_time: %.6f\n'      %(self.end_time) + \
+                '    remove_time: %.6f\n'   %(self.remove_time) + \
+                '    update_time: %.6f\n'   %(self.update_time) + \
+                '    resend: %d\n'          %(self.resend) 
 
         return ret
 

@@ -51,3 +51,21 @@ class SimLink:
         """
         self.flows[(src_ip, dst_ip)] = flow_item
 
+
+    def get_n_active_flows(self):
+        """Get number of active flows running on this link.
+
+        Args:
+            None
+
+        Return:
+            int: # of active flows
+            
+        """
+        ret = 0
+
+        for fl in self.flows:
+            if (self.flows[fl].status == 'active'):
+                ret += 1
+
+        return ret

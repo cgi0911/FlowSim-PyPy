@@ -210,6 +210,30 @@ class SimCore:
         setattr(self.topo.edge[node1][node2]['item'], attr_name, val)
 
 
+    def get_links_in_path(self, path):
+        """Get a list of links along the specified path.
+
+        Args:
+            path (list of strings): List of node names along the path
+
+        Returns:
+            list of 2-tuples: List of links along the path, each represented by 
+                              a 2-tuple of node names.
+
+        """
+        ret = []
+
+        for i in range(len(path)-1):
+            if (path[i], path[i+1]) in self.topo.edges():
+                ret.append((path[i], path[i+1]))
+            elif (path[i+1], path[i]) in self.topo.edges():
+                ret.append((path[i+1], path[i]))
+
+        return ret
+
+
+
+
     def install_entries_to_path(self, path, src_ip, dst_ip):
         """Install flow entries to the specified path.
 
@@ -251,11 +275,65 @@ class SimCore:
         """Calculate flow rates (according to DevoFlow Algorithm 1).
 
         Args:
+            None
 
         Returns:
+            
 
         """
-        pass
+        # The following local dicts have links as their keys (represented by 2-tuple of node names)
+        # Values are either float64 (caps, unasgn_caps) or int (active_flows, unasgn_flows)
+        link_bw = {}                # Value: maximum BW on that link
+        link_unasgn_bw = {}         # Value: Unassigned BW on that link
+        link_n_active_flows = {}    # Value: # of active flows on that link
+        link_n_unasgn_flows = {}    # Value: # of unassigned flows on that link
+
+        # The following local dicts have flows as their keys (represented by 2-tuple of IPs)
+        flow_asgn = {}        # Value: boolean that signals whether the flow is assigned.
+        flow_asgn_bw = {}       # Value: assigned BW for that flow
+
+        # Initialization:
+        for lk in self.topo.edges_iter():
+            link_bw[lk] = self.get_link_attr(lk[0], lk[1], 'cap')
+            link_unasgn_bw[lk] = link_bw[lk]
+            link_n_active_flows[lk] = self.topo.edge[lk[0]][lk[1]]['item'].get_n_active_flows()
+            link_n_unasgn_flows[lk] = link_n_active_flows[lk]
+
+        for fl in self.flows:
+            if (not self.flows[fl].status == 'active'):
+                continue
+            else:
+                flow_asgn[fl] = False
+                flow_asgn_bw[fl] = 0.0
+
+        list_unfin_links = [lk for lk in self.topo.edges() if link_n_unasgn_flows[lk] > 0]
+
+        while (len(list_unfin_links) > 0):
+            btneck_link = sorted(list_unfin_links, \
+                                 key=lambda lk: link_unasgn_bw[lk]/link_n_unasgn_flows[lk], \
+                                 reverse=False)[0]            
+            btneck_bw = link_unasgn_bw[btneck_link]/link_n_unasgn_flows[btneck_link]
+
+            for fl in self.get_link_attr(btneck_link[0], btneck_link[1], 'flows'):
+                if (fl in flow_asgn):
+                    if (flow_asgn[fl] == False):
+                        # Write btneck_bw to flow
+                        flow_asgn[fl] = True
+                        flow_asgn_bw[fl] = btneck_bw
+                        # Update link unassigned BW and link unassigned flows along the path
+                        path = self.flows[fl].path
+
+                        for lk in self.get_links_in_path(path):
+                            link_unasgn_bw[lk] = link_unasgn_bw[lk] - btneck_bw
+                            link_n_unasgn_flows[lk] = link_n_unasgn_flows[lk] - 1
+                            if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
+                                list_unfin_links.remove(lk)
+        
+        for fl in self.flows:
+            if (fl in flow_asgn_bw):
+                self.flows[fl].curr_rate = flow_asgn_bw[fl]
+            else:
+                self.flows[fl].curr_rate = 0.0
 
 
     def handle_EvFlowArrival(self, ev_time, event):
