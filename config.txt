@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-"""config.py: Configuration file. Contains the parameter needed.
+"""config.txt: Configuration file. Contains the parameter needed.
 """
 __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
@@ -27,7 +27,9 @@ ROUTING_MODE = 'ecmp'            # Supported routing modes:
 K_PATH = 4                      # Number of predefined path per src-dst pair
 #K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-# ---- Logging Options ----
+# ----------------------------------------
+# Screen Printing Options
+# ----------------------------------------
 SHOW_PROGRESS = 0
 SHOW_EVENTS = 1
 SHOW_REJECTS = 1
@@ -37,6 +39,9 @@ SHOW_TABLE_OVERFLOW = 0
 SHOW_FLOW_CALC = 0
 SHOW_REROUTE = 0
 
+# ----------------------------------------
+# Logging Options
+# ----------------------------------------
 LOG_PARAMS = 1
 LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL =  1
@@ -44,24 +49,30 @@ LOG_FLOW_STATS = 1
 LOG_SUMMARIES = 1
 
 # ----------------------------------------
-# Time-related parameters
+# Time-related Parameters
 # ----------------------------------------
 SW_CTRL_DELAY = 0.005           # Switch-to-controller delay
 CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
-IDLE_TIMEOUT = 0.000			# Idle timeout
+IDLE_TIMEOUT = 1.000			# Idle timeout
 REJECT_TIMEOUT = 0.100          # Timeout for flow re-request if rejected due to overflow
 
-# ---- Flowgen Options ----
+# ----------------------------------------
+# Flow Generation Parameters
+# ----------------------------------------
 FLOW_DST_MODEL = 'uniform'      # Uniform: Randomly pick one non-src
 FLOW_SIZE_MODEL = 'uniform'
 FLOW_INTARR_MODEL = 'saturate'  # Saturate: generate another flow immediatedly
                                 # after flow ends at a host
 FLOW_RATE_MODEL = 'uniform'
 
-FLOW_SIZE_LOW = 5e6             # Applicable only to FLOW_SIZE_MODEL='uniform'
-FLOW_SIZE_HIGH = 10e6           # Applicable only to FLOW_SIZE_MODEL='uniform'
-FLOW_RATE_LOW = 5e6             # Applicable only to FLOW_RATE_MODEL='uniform'
-FLOW_RATE_HIGH = 10e6           # Applicable only to FLOW_RATE_MODEL='uniform'
+# Applicable only to FLOW_SIZE_MODEL='uniform'
+FLOW_SIZE_LOW = 5e7
+FLOW_SIZE_HIGH = 10e7
+FLOW_RATE_LOW = 5e6
+FLOW_RATE_HIGH = 10e6
+
+# Applicable only to FLOW_SIZE_MODEL='bimodal'
+PROB_LARGE_FLOW = 0.1
 
 LATEST_INIT_FLOW_TIME = 1.0     # Latest initial flow arrival time
 FLOWGEN_DELAY = 0.1 			# When a host's flow ends, generate a new flow after this delay

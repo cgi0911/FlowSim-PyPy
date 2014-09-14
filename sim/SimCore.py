@@ -280,7 +280,8 @@ class SimCore:
             None
 
         Returns:
-
+            None. But will update flow and link statistics, as well as identify next ending
+            flow and its estimated end time.
 
         """
         # The following local dicts have links as their keys (represented by 2-tuple of node names)
@@ -291,7 +292,7 @@ class SimCore:
         link_n_unasgn_flows = {}    # Value: # of unassigned flows on that link
 
         # The following local dicts have flows as their keys (represented by 2-tuple of IPs)
-        flow_asgn = {}        # Value: boolean that signals whether the flow is assigned.
+        flow_asgn = {}          # Value: boolean that signals whether the flow is assigned.
         flow_asgn_bw = {}       # Value: assigned BW for that flow
 
         # Initialization:
@@ -308,8 +309,11 @@ class SimCore:
                 flow_asgn[fl] = False
                 flow_asgn_bw[fl] = 0.0
 
+        # ---- Start iterating over bottleneck links ----
         list_unfin_links = [lk for lk in self.topo.edges() if link_n_unasgn_flows[lk] > 0]
                                                         # List of links that are not yet processed
+        earliest_end_time = 99999999.9  # Just a very large float number
+        earliest_end_flow = ('', '')
 
         while (len(list_unfin_links) > 0):
             # Find the bottleneck link (link with minimum avg. BW for unassigned links)
@@ -322,9 +326,26 @@ class SimCore:
             for fl in self.get_link_attr(btneck_link[0], btneck_link[1], 'flows'):
                 if (fl in flow_asgn):
                     if (flow_asgn[fl] == False):
+                        # ---- Flow operations ----
                         # Write btneck_bw to flow
                         flow_asgn[fl] = True
                         flow_asgn_bw[fl] = btneck_bw
+                        # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
+                        # update_time, etc.
+                        self.flows[fl].bytes_left -= self.flows[fl].curr_rate * \
+                                                     (ev_time - self.flows[fl].update_time)
+                        self.flows[fl].bytes_sent = self.flows[fl].flow_size - \
+                                                    self.flows[fl].bytes_left
+                        self.flows[fl].update_time = ev_time
+                        self.flows[fl].curr_rate = btneck_bw    # Update after...
+                        # Calculate next ending flow and its estimated end time
+                        est_end_time = ev_time + (self.flows[fl].bytes_left / \
+                                       self.flows[fl].curr_rate)
+                        if (est_end_time < earliest_end_time):
+                            earliest_end_time = est_end_time
+                            earliest_end_flow = fl
+
+                        # ---- Link operations ----
                         # Update link unassigned BW and link unassigned flows along the path
                         path = self.flows[fl].path
 
@@ -333,27 +354,6 @@ class SimCore:
                             link_n_unasgn_flows[lk] = link_n_unasgn_flows[lk] - 1
                             if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
                                 list_unfin_links.remove(lk)
-
-        earliest_end_time = 99999999.9  # Just a large float number
-        earliest_end_flow = ('', '')
-
-        for fl in self.flows:
-            if (fl in flow_asgn_bw):
-                # Decrement the bytes_left and increment the bytes_sent
-                self.flows[fl].bytes_left -= self.flows[fl].curr_rate * \
-                                             (ev_time - self.flows[fl].update_time)
-                self.flows[fl].bytes_sent = self.flows[fl].flow_size - self.flows[fl].bytes_left
-                # Assign curr_rate
-                self.flows[fl].curr_rate = flow_asgn_bw[fl]
-                # Update update_time
-                self.flows[fl].update_time = ev_time
-                # Calculate estimated end time
-                est_end_time = ev_time + self.flows[fl].bytes_left / self.flows[fl].curr_rate
-                if (est_end_time < earliest_end_time):
-                    earliest_end_time = est_end_time
-                    earliest_end_flow = fl
-            else:
-                self.flows[fl].curr_rate = 0.0
 
         self.next_end_time = earliest_end_time
         self.next_end_flow = earliest_end_flow
@@ -496,11 +496,13 @@ class SimCore:
         self.calc_flow_rates(ev_time)
         # Schedule an EvIdleTimeout event
         new_ev_time = ev_time + cfg.IDLE_TIMEOUT
-        new_EvIdleTimeout = EvIdleTimeout(src_ip=event.src_ip, dst_ip=event.dst_ip)
+        new_EvIdleTimeout = EvIdleTimeout(ev_time=new_ev_time, \
+                                          src_ip=event.src_ip, \
+                                          dst_ip=event.dst_ip)
         heappush(self.ev_queue, (new_ev_time, new_EvIdleTimeout))
         # Generate a new flow and schedule an EvFlow
         new_ev_time = ev_time + cfg.FLOWGEN_DELAY
-        new_EvFlowArrival = self.flowgen.gen_new_flow_with_src(event.src_ip)
+        new_EvFlowArrival = self.flowgen.gen_new_flow_with_src(new_ev_time, event.src_ip, self)
         heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
         # Log flow stats
         if (cfg.LOG_FLOW_STATS > 0):
@@ -531,9 +533,6 @@ class SimCore:
         for lk in self.get_links_in_path(path):
             self.topo.edge[lk[0]][lk[1]]['item'].remove_flow_entry(event.src_ip, event.dst_ip)
         del self.flows[fl]
-
-
-
 
 
     def handle_EvHardTimeout(self, ev_time, event):
@@ -596,7 +595,7 @@ class SimCore:
 
         """
         # Step 1: Generate initial set of flows and queue them as FlowArrival events
-        self.flowgen.gen_init_flows(self.ev_queue)
+        self.flowgen.gen_init_flows(self.ev_queue, self)
 
         # Step 2: Initialize logging
         # self.init_logging()
@@ -622,7 +621,8 @@ class SimCore:
                 # Next flow end comes earlier than next event
                 # Schedule a EvFlowEnd event
                 ev_time = self.next_end_time
-                event = EvFlowEnd(src_ip=self.next_end_flow[0], \
+                event = EvFlowEnd(ev_time=ev_time, \
+                                  src_ip=self.next_end_flow[0], \
                                   dst_ip=self.next_end_flow[1])
                 ev_type = 'EvFlowEnd'
 
@@ -630,7 +630,7 @@ class SimCore:
 
             if (cfg.SHOW_EVENTS > 0):
                 print '%.6f' %(ev_time)
-                #print event
+                print event
 
             # ---- Handle Events ----
             # Handle EvFlowArrival
