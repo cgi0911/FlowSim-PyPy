@@ -50,6 +50,7 @@ class SimFlow:
                     flow_size=0.0,
                     flow_rate=0.0,
                     curr_rate=0.0,
+                    avg_rate=0.0,
                     bytes_left=0.0,
                     bytes_sent=0.0,
                     status='requesting',
@@ -68,6 +69,7 @@ class SimFlow:
         self.flow_size = flow_size
         self.flow_rate = flow_rate
         self.curr_rate = curr_rate
+        self.avg_rate = avg_rate
         self.bytes_left = bytes_left
         self.bytes_sent = bytes_sent
         self.status = status
@@ -88,6 +90,7 @@ class SimFlow:
                 '    flow_size: %.6f\n'     %(self.flow_size) + \
                 '    flow_rate: %.6f\n'     %(self.flow_rate) + \
                 '    curr_rate: %.6f\n'     %(self.curr_rate) + \
+                '    avg_rate: %.6f\n'      %(self.avg_rate) + \
                 '    bytes_left: %.6f\n'    %(self.bytes_left) + \
                 '    bytes_sent: %.6f\n'    %(self.bytes_sent) + \
                 '    arrive_time: %.6f\n'   %(self.arrive_time) + \
@@ -95,7 +98,7 @@ class SimFlow:
                 '    end_time: %.6f\n'      %(self.end_time) + \
                 '    remove_time: %.6f\n'   %(self.remove_time) + \
                 '    update_time: %.6f\n'   %(self.update_time) + \
-                '    resend: %d\n'          %(self.resend) 
+                '    resend: %d\n'          %(self.resend)
 
         return ret
 

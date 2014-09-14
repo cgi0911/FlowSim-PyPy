@@ -48,6 +48,16 @@ LOG_TABLE_UTIL =  1
 LOG_FLOW_STATS = 1
 LOG_SUMMARIES = 1
 
+LOG_DIR = './logs'
+
+LOG_LINK_UTIL_FIELDS = []
+LOG_TABLE_UTIL_FIELDS = []
+LOG_FLOW_STATS_FIELDS = ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', 'avg_rate', \
+                         'arrive_time', 'install_time', 'end_time', 'resend']
+                        # Specified in column order
+
+
+
 # ----------------------------------------
 # Time-related Parameters
 # ----------------------------------------
