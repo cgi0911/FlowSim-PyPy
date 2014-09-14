@@ -34,7 +34,9 @@ class SimFlow:
         end_time (float64): Time when flow transmission completes
         remove_time (float64): Time when flow entries are removed from path switches
         update_time (float64): Time when flow's status or rate is last updated
+        duration (float64): Flow duration
         resend (int): # of resent EvPacketIn events before flow got admitted
+        reroute (int): # of times this flow being rerouted
 
     Extra Notes:
         1. Possible flow status: 'requesting', 'active', 'idle'
@@ -61,6 +63,7 @@ class SimFlow:
                     update_time = -1.0,
                     duration = 0.0,
                     resend = 0,
+                    reroute = 0
                 ):
         self.src_ip = src_ip
         self.dst_ip = dst_ip
@@ -81,6 +84,7 @@ class SimFlow:
         self.update_time = update_time
         self.duration = duration
         self.resend = resend
+        self.reroute = reroute
 
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line
@@ -101,7 +105,8 @@ class SimFlow:
                 '    remove_time: %.6f\n'   %(self.remove_time) + \
                 '    update_time: %.6f\n'   %(self.update_time) + \
                 '    duration: %.6f\n'      %(self.duration) + \
-                '    resend: %d\n'          %(self.resend)
+                '    resend: %d\n'          %(self.resend) + \
+                '    reroute: %d\n'         %(self.reroute)
 
         return ret
 

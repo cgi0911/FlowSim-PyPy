@@ -103,9 +103,11 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         self.flow_stats_recs = []
         if ( not os.path.exists(cfg.LOG_DIR) ):
             os.mkdir(cfg.LOG_DIR)
-        self.fn_link_util_recs = os.path.join(cfg.LOG_DIR, 'link_util.csv')
-        self.fn_table_util_recs = os.path.join(cfg.LOG_DIR, 'table_util.csv')
-        self.fn_flow_stats_recs = os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
+        self.fn_link_util = os.path.join(cfg.LOG_DIR, 'link_util.csv')
+        self.fn_table_util = os.path.join(cfg.LOG_DIR, 'table_util.csv')
+        self.fn_flow_stats = os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
+        self.col_table_util = ['time', 'mean', 'rmse', 'min', 'max', 'q1', 'q3', 'median'] + \
+                              [str(nd) for nd in self.topo.nodes()]
 
 
     def display_topo(self):
@@ -439,9 +441,20 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             # Handle EvReroute
 
         # Step 4: Dump list of records to pd.DataFrame, then to csv files
+        if (cfg.LOG_LINK_UTIL > 0):
+            pass
+
+        if (cfg.LOG_TABLE_UTIL > 0):
+            df_table_util = pd.DataFrame.from_records(self.table_util_recs, \
+                                                      columns=self.col_table_util)
+            df_table_util.to_csv(self.fn_table_util, index=False, \
+                                 quoting=csv.QUOTE_NONNUMERIC)
+
         if (cfg.LOG_FLOW_STATS > 0):
             df_flow_stats = pd.DataFrame.from_records(self.flow_stats_recs, \
                                                       columns=cfg.LOG_FLOW_STATS_FIELDS)
-            df_flow_stats.to_csv(self.fn_flow_stats_recs, index=False, \
+            df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
                                  quoting=csv.QUOTE_NONNUMERIC)
+
+
 

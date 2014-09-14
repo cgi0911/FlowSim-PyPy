@@ -51,6 +51,10 @@ class SimSwitch:
         return len(self.table)
 
 
+    def get_util(self):
+        return float(len(self.table)) / float(self.table_size)
+
+
     def install_flow_entry(self, src_ip, dst_ip):
         if (not (src_ip, dst_ip) in self.table):
             self.table[(src_ip, dst_ip)] = 0.0

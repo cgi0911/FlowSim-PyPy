@@ -261,5 +261,8 @@ class SimCoreEventHandling:
 
     def handle_EvLogTableUtil(self, ev_time, event):
         """
+
+
         """
-        pass
+        if (cfg.LOG_TABLE_UTIL > 0):
+            self.table_util_recs.append(self.log_table_util(ev_time))

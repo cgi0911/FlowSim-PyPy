@@ -179,3 +179,11 @@ class EvLogLinkUtil(SimEvent):
     Attributes:
         ev_type (str): 'EvLogLinkUtil'
     """
+
+
+class EvLogTableUtil(SimEvent):
+    """Event that signals the simulation core to log link utilizations.
+
+    Attributes:
+        ev_type (str): 'EvLogLinkUtil'
+    """
