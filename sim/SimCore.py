@@ -97,17 +97,8 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         self.next_end_time = 999999.9   # Records next ending flow's estimated ending time
         self.next_end_flow = ('', '')   # Records next ending flow
 
-        # ---- Bookkeeping, framing and logging ----
-        self.link_util_recs = []
-        self.table_util_recs = []
-        self.flow_stats_recs = []
-        if ( not os.path.exists(cfg.LOG_DIR) ):
-            os.mkdir(cfg.LOG_DIR)
-        self.fn_link_util = os.path.join(cfg.LOG_DIR, 'link_util.csv')
-        self.fn_table_util = os.path.join(cfg.LOG_DIR, 'table_util.csv')
-        self.fn_flow_stats = os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
-        self.col_table_util = ['time', 'mean', 'rmse', 'min', 'max', 'q1', 'q3', 'median'] + \
-                              [str(nd) for nd in self.topo.nodes()]
+        # ---- Constructor of base classes ----
+        SimCoreLogging.__init__(self)
 
 
     def display_topo(self):
@@ -222,7 +213,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         setattr(self.topo.edge[node1][node2]['item'], attr_name, val)
 
 
-    def get_links_in_path(self, path):
+    def get_links_on_path(self, path):
         """Get a list of links along the specified path.
 
         Args:
@@ -342,8 +333,9 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                         flow_asgn_bw[fl] = btneck_bw
                         # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
                         # update_time, etc.
-                        self.flows[fl].bytes_left -= self.flows[fl].curr_rate * \
-                                                     (ev_time - self.flows[fl].update_time)
+                        bytes_sent = self.flows[fl].curr_rate * \
+                                     (ev_time - self.flows[fl].update_time)
+                        self.flows[fl].bytes_left -= bytes_sent
                         self.flows[fl].bytes_sent = self.flows[fl].flow_size - \
                                                     self.flows[fl].bytes_left
                         self.flows[fl].update_time = ev_time
@@ -359,7 +351,8 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                         # Update link unassigned BW and link unassigned flows along the path
                         path = self.flows[fl].path
 
-                        for lk in self.get_links_in_path(path):
+                        for lk in self.get_links_on_path(path):
+                            self.link_byte_cnt[lk] += bytes_sent
                             link_unasgn_bw[lk] = link_unasgn_bw[lk] - btneck_bw
                             link_n_unasgn_flows[lk] = link_n_unasgn_flows[lk] - 1
                             if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
@@ -439,10 +432,21 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             # Handle EvHardTimeout
             # Handle EvPullStats
             # Handle EvReroute
+            # Handle EvLogLinkUtil
+            elif (ev_type == 'EvLogLinkUtil'):
+                self.handle_EvLogLinkUtil(ev_time, event)
+
+            # Handle EvLogTableUtil
+            elif (ev_type == 'EvLogTableUtil'):
+                self.handle_EvLogTableUtil(ev_time, event)
+
 
         # Step 4: Dump list of records to pd.DataFrame, then to csv files
         if (cfg.LOG_LINK_UTIL > 0):
-            pass
+            df_link_util = pd.DataFrame.from_records(self.link_util_recs, \
+                                                      columns=self.col_link_util)
+            df_link_util.to_csv(self.fn_link_util, index=False, \
+                                 quoting=csv.QUOTE_NONNUMERIC)
 
         if (cfg.LOG_TABLE_UTIL > 0):
             df_table_util = pd.DataFrame.from_records(self.table_util_recs, \

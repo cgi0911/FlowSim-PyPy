@@ -256,13 +256,16 @@ class SimCoreEventHandling:
     def handle_EvLogLinkUtil(self, ev_time, event):
         """
         """
-        pass
+        if (cfg.LOG_LINK_UTIL > 0):
+            self.link_util_recs.append(self.log_link_util(ev_time))
+            new_ev_time = ev_time + cfg.PERIOD_LOGGING
+            heappush(self.ev_queue, (new_ev_time, EvLogLinkUtil(ev_time=new_ev_time)))
 
 
     def handle_EvLogTableUtil(self, ev_time, event):
         """
-
-
         """
         if (cfg.LOG_TABLE_UTIL > 0):
             self.table_util_recs.append(self.log_table_util(ev_time))
+            new_ev_time = ev_time + cfg.PERIOD_LOGGING
+            heappush(self.ev_queue, (new_ev_time, EvLogTableUtil(ev_time=new_ev_time)))

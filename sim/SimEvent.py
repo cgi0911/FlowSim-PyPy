@@ -170,7 +170,7 @@ class EvPullStats(SimEvent):
     """
 
     def __init__(self, **kwargs):
-        SimEvent.__init__(self, ev_type='PullStats', ev_time=kwargs.get('ev_time', 0.0))
+        SimEvent.__init__(self, ev_type='EvPullStats', ev_time=kwargs.get('ev_time', 0.0))
 
 
 class EvLogLinkUtil(SimEvent):
@@ -180,6 +180,9 @@ class EvLogLinkUtil(SimEvent):
         ev_type (str): 'EvLogLinkUtil'
     """
 
+    def __init__(self, **kwargs):
+        SimEvent.__init__(self, ev_type='EvLogLinkUtil', ev_time=kwargs.get('ev_time', 0.0))
+
 
 class EvLogTableUtil(SimEvent):
     """Event that signals the simulation core to log link utilizations.
@@ -187,3 +190,6 @@ class EvLogTableUtil(SimEvent):
     Attributes:
         ev_type (str): 'EvLogLinkUtil'
     """
+
+    def __init__(self, **kwargs):
+        SimEvent.__init__(self, ev_type='EvLogTableUtil', ev_time=kwargs.get('ev_time', 0.0))
