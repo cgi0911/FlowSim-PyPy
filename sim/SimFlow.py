@@ -59,6 +59,7 @@ class SimFlow:
                     end_time = -1.0,
                     remove_time = -1.0,
                     update_time = -1.0,
+                    duration = 0.0,
                     resend = 0,
                 ):
         self.src_ip = src_ip
@@ -78,6 +79,7 @@ class SimFlow:
         self.end_time = end_time
         self.remove_time = remove_time
         self.update_time = update_time
+        self.duration = duration
         self.resend = resend
 
     def __str__(self):
@@ -98,6 +100,7 @@ class SimFlow:
                 '    end_time: %.6f\n'      %(self.end_time) + \
                 '    remove_time: %.6f\n'   %(self.remove_time) + \
                 '    update_time: %.6f\n'   %(self.update_time) + \
+                '    duration: %.6f\n'      %(self.duration) + \
                 '    resend: %d\n'          %(self.resend)
 
         return ret

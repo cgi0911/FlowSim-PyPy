@@ -379,7 +379,18 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         # Step 1: Generate initial set of flows and queue them as FlowArrival events
         self.flowgen.gen_init_flows(self.ev_queue, self)
 
-        # Step 2: Main loop of simulation
+        # Step 2: Initialize EvLogLinkUtil, EvLogTableUtil and EvReroute events
+        if (cfg.LOG_LINK_UTIL > 0):
+            heappush(self.ev_queue, (cfg.PERIOD_LOGGING, \
+                                     EvLogLinkUtil(ev_time=cfg.PERIOD_LOGGING)))
+        if (cfg.LOG_TABLE_UTIL > 0):
+            heappush(self.ev_queue, (cfg.PERIOD_LOGGING, \
+                                     EvLogTableUtil(ev_time=cfg.PERIOD_LOGGING)))
+        if (cfg.DO_REROUTE > 0):
+            heappush(self.ev_queue, (cfg.PERIOD_REROUTE, \
+                                     EvReroute(ev_time=cfg.PERIOD_REROUTE)))
+
+        # Step 3: Main loop of simulation
         while (self.timer <= self.sim_time):
             if (self.ev_queue[0][0] < self.next_end_time):
                 # Next event comes earlier than next flow end
@@ -427,9 +438,10 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             # Handle EvPullStats
             # Handle EvReroute
 
-        # Step 3: Dump list of records to pd.DataFrame, then to csv files
-        df_flow_stats = pd.DataFrame.from_records(self.flow_stats_recs, \
-                                                  columns=cfg.LOG_FLOW_STATS_FIELDS)
-        df_flow_stats.to_csv(self.fn_flow_stats_recs, index=False, \
-                             quoting=csv.QUOTE_NONNUMERIC)
+        # Step 4: Dump list of records to pd.DataFrame, then to csv files
+        if (cfg.LOG_FLOW_STATS > 0):
+            df_flow_stats = pd.DataFrame.from_records(self.flow_stats_recs, \
+                                                      columns=cfg.LOG_FLOW_STATS_FIELDS)
+            df_flow_stats.to_csv(self.fn_flow_stats_recs, index=False, \
+                                 quoting=csv.QUOTE_NONNUMERIC)
 

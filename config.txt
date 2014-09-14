@@ -8,16 +8,10 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # ---- Frequently Used ----
 DIR_TOPO = './topologies/geant'
-SIM_TIME = 10.0
+SIM_TIME = 1.0
 
+DO_REROUTE = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-# ----
-OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 1000
-OVERRIDE_N_HOSTS = True
-N_HOSTS_PER_SW = 10
-OVERRIDE_CAP = True
-CAP_PER_LINK = 1e9
 
 # ----
 ROUTING_MODE = 'ecmp'            # Supported routing modes:
@@ -27,11 +21,22 @@ ROUTING_MODE = 'ecmp'            # Supported routing modes:
 K_PATH = 4                      # Number of predefined path per src-dst pair
 #K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
+# ---------------------------------------
+# Switch/link Initialization Parameters
+# ---------------------------------------
+OVERRIDE_TABLESIZE = True
+TABLESIZE_PER_SW = 1000
+OVERRIDE_N_HOSTS = True
+N_HOSTS_PER_SW = 20
+OVERRIDE_CAP = True
+CAP_PER_LINK = 1e9
+
+
 # ----------------------------------------
 # Screen Printing Options
 # ----------------------------------------
 SHOW_PROGRESS = 0
-SHOW_EVENTS = 1
+SHOW_EVENTS = 0
 SHOW_REJECTS = 1
 SHOW_K_PATH_CONSTRUCTION = 0
 SHOW_LINK_CONGESTION = 0
@@ -43,28 +48,30 @@ SHOW_REROUTE = 0
 # Logging Options
 # ----------------------------------------
 LOG_PARAMS = 1
-LOG_LINK_UTIL = 1
-LOG_TABLE_UTIL =  1
+LOG_LINK_UTIL = 0
+LOG_TABLE_UTIL =  0
 LOG_FLOW_STATS = 1
 LOG_SUMMARIES = 1
 
 LOG_DIR = './logs'
 
+# Specified in column order
 LOG_LINK_UTIL_FIELDS = []
 LOG_TABLE_UTIL_FIELDS = []
 LOG_FLOW_STATS_FIELDS = ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', 'avg_rate', \
-                         'arrive_time', 'install_time', 'end_time', 'resend']
-                        # Specified in column order
-
-
+                         'arrive_time', 'install_time', 'end_time', 'duration', 'resend']
 
 # ----------------------------------------
 # Time-related Parameters
 # ----------------------------------------
+PERIOD_LOGGING = 0.100 			# Period of doing link util and table util logging.
+
 SW_CTRL_DELAY = 0.005           # Switch-to-controller delay
 CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
 IDLE_TIMEOUT = 1.000			# Idle timeout
 REJECT_TIMEOUT = 0.100          # Timeout for flow re-request if rejected due to overflow
+
+PERIOD_REROUTE = 1.000 			# Period of rerouting
 
 # ----------------------------------------
 # Flow Generation Parameters
@@ -83,6 +90,7 @@ FLOW_RATE_HIGH = 10e6
 
 # Applicable only to FLOW_SIZE_MODEL='bimodal'
 PROB_LARGE_FLOW = 0.1
+
 
 LATEST_INIT_FLOW_TIME = 1.0     # Latest initial flow arrival time
 FLOWGEN_DELAY = 0.1 			# When a host's flow ends, generate a new flow after this delay

@@ -166,8 +166,16 @@ class EvPullStats(SimEvent):
     """Event that signals controller's pulling flow-level statistics.
 
     Attributes:
-      ev_type (str): 'PullStats'
+        ev_type (str): 'EvPullStats'
     """
 
     def __init__(self, **kwargs):
         SimEvent.__init__(self, ev_type='PullStats', ev_time=kwargs.get('ev_time', 0.0))
+
+
+class EvLogLinkUtil(SimEvent):
+    """Event that signals the simulation core to log link utilizations.
+
+    Attributes:
+        ev_type (str): 'EvLogLinkUtil'
+    """

@@ -168,6 +168,7 @@ class SimCoreEventHandling:
         flow_item = self.flows[fl]
         flow_item.status = 'idle'
         flow_item.end_time = ev_time
+        flow_item.duration = flow_item.end_time - flow_item.arrive_time
         flow_item.avg_rate = flow_item.flow_size / (flow_item.end_time - flow_item.arrive_time)
         # Log flow stats
         if (cfg.LOG_FLOW_STATS > 0):
@@ -252,13 +253,13 @@ class SimCoreEventHandling:
         pass
 
 
-    def handle_EvLogLinkStats(self, ev_time, event):
+    def handle_EvLogLinkUtil(self, ev_time, event):
         """
         """
         pass
 
 
-    def handle_EvLogNodeStats(self, ev_time, event):
+    def handle_EvLogTableUtil(self, ev_time, event):
         """
         """
         pass
