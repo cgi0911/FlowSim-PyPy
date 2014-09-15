@@ -65,26 +65,26 @@ class SimFlow:
                     resend = 0,
                     reroute = 0
                 ):
-        self.src_ip = src_ip
-        self.dst_ip = dst_ip
-        self.src_node = src_node
-        self.dst_node = dst_node
-        self.path = path
-        self.flow_size = flow_size
-        self.flow_rate = flow_rate
-        self.curr_rate = curr_rate
-        self.avg_rate = avg_rate
-        self.bytes_left = bytes_left
-        self.bytes_sent = bytes_sent
-        self.status = status
-        self.arrive_time = arrive_time
-        self.install_time = install_time
-        self.end_time = end_time
-        self.remove_time = remove_time
-        self.update_time = update_time
-        self.duration = duration
-        self.resend = resend
-        self.reroute = reroute
+        self.src_ip         = src_ip
+        self.dst_ip         = dst_ip
+        self.src_node       = src_node
+        self.dst_node       = dst_node
+        self.path           = path
+        self.flow_size      = flow_size
+        self.flow_rate      = flow_rate
+        self.curr_rate      = curr_rate
+        self.avg_rate       = avg_rate
+        self.bytes_left     = bytes_left
+        self.bytes_sent     = bytes_sent
+        self.status         = status
+        self.arrive_time    = arrive_time
+        self.install_time   = install_time
+        self.end_time       = end_time
+        self.remove_time    = remove_time
+        self.update_time    = update_time
+        self.duration       = duration
+        self.resend         = resend
+        self.reroute        = reroute
 
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line

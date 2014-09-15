@@ -74,13 +74,12 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
         self.topo = nx.Graph()
-        fn_nodes = os.path.join(cfg.DIR_TOPO, 'nodes.csv')
-        fn_links = os.path.join(cfg.DIR_TOPO, 'links.csv')
-        self.nodes_df = pd.read_csv(fn_nodes, index_col=False)
-        self.links_df = pd.read_csv(fn_links, index_col=False)
-        self.df_to_topo(self.nodes_df, self.links_df)   # Translate pd.DataFrame into networkx.Graph
-        self.edges = self.topo.edges()
-        self.nodes = self.topo.nodes()
+        self.nodes = []
+        self.links = []
+        self.nodeobjs = {}
+        self.linkobjs = {}
+        self.link_mapper = {}
+        self.build_topo()   # Translate pd.DataFrame into networkx.Graph
 
         # ---- Create hosts, assign edge switches * IPs ----
         self.hosts = {}
@@ -110,9 +109,9 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             None
 
         """
-        print 'Nodes:', self.topo.nodes()
+        print 'Nodes:', self.nodes
         print
-        print 'Links:', self.topo.edges()
+        print 'Links:', self.links
 
 
     def display_topo_details(self):
@@ -122,14 +121,14 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             None
 
         """
-        for node in self.topo.nodes_iter():
-            print self.topo.node[node]['item']
+        for nd in self.nodes:
+            print self.nodeobjs[nd]
 
-        for link in self.topo.edges():
-            print self.topo.edge[link[0]][link[1]]['item']
+        for lk in self.links:
+            print self.linkobjs[lk]
 
 
-    def df_to_topo(self, nodes_df, links_df):
+    def build_topo(self):
         """Read the nodes and link dataframe row by row and translate into networkx.Graph.
         Referred by SimCore.__init__().
 
@@ -141,15 +140,30 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             None. self.topo is modified on site.
 
         """
+        nodes_df = pd.read_csv(os.path.join(cfg.DIR_TOPO, 'nodes.csv'), index_col=False)
+        links_df = pd.read_csv(os.path.join(cfg.DIR_TOPO, 'links.csv'), index_col=False)
+
         for myRow in nodes_df.iterrows():
             rowdict = dict(myRow[1])    # myRow is a 2-tuple: (index, dict of params)
             name = rowdict['name']
-            self.topo.add_node(name, item=SimSwitch(**rowdict))
+            self.topo.add_node(name)
+            self.nodeobjs[name] = SimSwitch(**rowdict)
 
         for myRow in links_df.iterrows():
             rowdict = dict(myRow[1])
             node1, node2 = rowdict['node1'], rowdict['node2']
-            self.topo.add_edge(node1, node2, item=SimLink(**rowdict))
+            self.topo.add_edge(node1, node2)
+            self.linkobjs[(node2, node1)] = SimLink(**rowdict)
+            self.linkobjs[(node1, node2)] = self.linkobjs[(node2, node1)]
+                                                    # (node2, node1) and (node1, node2)
+                                                    # Pointing to the same SimLink instance
+
+        self.nodes = self.topo.nodes()
+        self.links = self.topo.edges()
+
+        for lk in self.links:
+            self.link_mapper[lk] = lk
+            self.link_mapper[(lk[1], lk[0])] = lk
 
 
     def get_node_attr(self, sw_name, attr_name):
@@ -163,7 +177,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             Variable type: Switch attribute
 
         """
-        ret = getattr(self.topo.node[sw_name]['item'], attr_name)
+        ret = getattr(self.nodeobjs[sw_name], attr_name)
         return ret
 
 
@@ -179,7 +193,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             None
 
         """
-        setattr(self.topo.node[sw_name]['item'], attr_name, val)
+        setattr(self.nodeobjs[sw_name], attr_name, val)
 
     def get_link_attr(self, node1, node2, attr_name):
         """Get link (a.k.a. edge) attribute by link node names and attribute name.
@@ -194,7 +208,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             Variable type: Link attribute
 
         """
-        ret = getattr(self.topo.edge[node1][node2]['item'], attr_name)
+        ret = getattr(self.linkobjs[(node1, node2)], attr_name)
         return ret
 
 
@@ -212,7 +226,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             None
 
         """
-        setattr(self.topo.edge[node1][node2]['item'], attr_name, val)
+        setattr(self.linkobjs[(node1, node2)], attr_name, val)
 
 
     def get_links_on_path(self, path):
@@ -229,11 +243,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         ret = []
 
         for i in range(len(path)-1):
-            if (path[i], path[i+1]) in self.edges:
-                ret.append((path[i], path[i+1]))
-            #elif (path[i+1], path[i]) in self.edges:
-            else:
-                ret.append((path[i+1], path[i]))
+            ret.append(self.link_mapper[(path[i+1], path[i])])
 
         return ret
 
@@ -251,23 +261,21 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
         """
         for nd in path:
-            self.topo.node[nd]['item'].install_flow_entry(src_ip, dst_ip)
+            self.nodeobjs[nd].install_flow_entry(src_ip, dst_ip)
 
-        for i in range(len(path)-1):
-            #self.topo.edge[path[i]][path[i+1]]['item'].flows[(src_ip, dst_ip)] = \
-            #    self.flows[(src_ip, dst_ip)]
-            self.topo.edge[path[i]][path[i+1]]['item'].install_entry(src_ip, \
-                            dst_ip, self.flows[(src_ip, dst_ip)])
+        for lk in self.get_links_on_path(path):
+            flowobj = self.flows[(src_ip, dst_ip)]
+            self.linkobjs[lk].install_entry(src_ip, dst_ip, flowobj)
 
 
     def create_hosts(self):
         """Create hosts, bind hosts to edge switches, and assign IPs.
         """
         base_ip = na.IPAddress('10.0.0.1')
-        for nd in self.topo.nodes():
-            n_hosts = self.topo.node[nd]['item'].n_hosts
-            self.set_node_attr(nd, 'base_ip', base_ip)
-            self.set_node_attr(nd, 'end_ip', base_ip + n_hosts - 1)
+        for nd in self.nodes:
+            n_hosts = self.nodeobjs[nd].n_hosts
+            self.nodeobjs[nd].base_ip = base_ip
+            self.nodeobjs[nd].end_ip = base_ip + n_hosts - 1
 
             for i in range(n_hosts):
                 myIP = base_ip + i
@@ -298,21 +306,20 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         #flow_asgn_bw = {}       # Value: assigned BW for that flow
 
         # Initialization:
-        for lk in self.edges:
-            link_unasgn_bw[lk] = link_bw[lk] \
-                               = self.get_link_attr(lk[0], lk[1], 'cap')
-            link_n_unasgn_flows[lk] = link_n_active_flows[lk] \
-                                    = self.topo.edge[lk[0]][lk[1]]['item'].get_n_active_flows()
+        for lk in self.links:
+            cap = self.linkobjs[lk].cap
+            n_active_flows = self.linkobjs[lk].get_n_active_flows()
+            link_unasgn_bw[lk] = link_bw[lk] = cap
+            link_n_unasgn_flows[lk] = link_n_active_flows[lk] = n_active_flows
 
         for fl in self.flows:
             if (not self.flows[fl].status == 'active'):
                 continue
             else:
                 flow_asgn[fl] = False
-                #flow_asgn_bw[fl] = 0.0
 
         # ---- Start iterating over bottleneck links ----
-        list_unfin_links = [lk for lk in self.edges if link_n_unasgn_flows[lk] > 0]
+        list_unfin_links = [lk for lk in self.links if link_n_unasgn_flows[lk] > 0]
                                                         # List of links that are not yet processed
         earliest_end_time = 99999999.9  # Just a very large float number
         earliest_end_flow = ('', '')
@@ -325,10 +332,10 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             btneck_bw = link_unasgn_bw[btneck_link]/link_n_unasgn_flows[btneck_link]
 
             # Update all active flows on bottleneck links
-            for fl in self.get_link_attr(btneck_link[0], btneck_link[1], 'flows'):
-                flow_item = self.flows[fl]  # Store the pointer to self.flows[fl]!
+            for fl in self.linkobjs[btneck_link].flows:
+                flowobj = self.flows[fl]  # Store the pointer to self.flows[fl]!
                                             # This makes exec time a lot shorter!
-                if (not flow_item.status == 'active'):
+                if (not flowobj.status == 'active'):
                     continue
                 #if (fl in flow_asgn):
                 else:
@@ -340,28 +347,29 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
                         # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
                         # update_time, etc.
-                        bytes_sent = flow_item.curr_rate * \
-                                     (ev_time - flow_item.update_time)
-                        flow_item.bytes_left -= bytes_sent
-                        flow_item.bytes_sent = flow_item.flow_size - \
-                                               flow_item.bytes_left
-                        flow_item.update_time = ev_time
-                        flow_item.curr_rate = btneck_bw    # Update after...
-                        # Calculate next ending flow and its estimated end time
-                        est_end_time = ev_time + (flow_item.bytes_left / \
-                                       flow_item.curr_rate)
+                        bytes_sent          =   flowobj.curr_rate * \
+                                                (ev_time - flowobj.update_time)
+                        flowobj.bytes_left  -=  bytes_sent
+                        flowobj.bytes_sent  =   flowobj.flow_size - flowobj.bytes_left
+                        flowobj.update_time =   ev_time
+                        flowobj.curr_rate   =   btneck_bw
+                                                # Update after bytes_sent is calculated!
+
+                        # Calculate & update next ending flow and its estimated end time
+                        est_end_time        =   ev_time + \
+                                                (flowobj.bytes_left / flowobj.curr_rate)
                         if (est_end_time < earliest_end_time):
                             earliest_end_time = est_end_time
                             earliest_end_flow = fl
 
                         # ---- Link operations ----
                         # Update link unassigned BW and link unassigned flows along the path
-                        path = flow_item.path
+                        path = flowobj.path
 
                         for lk in self.get_links_on_path(path):
-                            self.link_byte_cnt[lk] += bytes_sent
-                            link_unasgn_bw[lk] -= btneck_bw
-                            link_n_unasgn_flows[lk] -= 1
+                            self.link_byte_cnt[lk]  +=  bytes_sent
+                            link_unasgn_bw[lk]      -=  btneck_bw
+                            link_n_unasgn_flows[lk] -=  1
                             if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
                                 list_unfin_links.remove(lk)
 
@@ -396,18 +404,18 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         while (self.timer <= self.sim_time):
             if (self.ev_queue[0][0] < self.next_end_time):
                 # Next event comes earlier than next flow end
-                event_tuple = heappop(self.ev_queue)
-                ev_time = event_tuple[0]
-                event = event_tuple[1]
-                ev_type = event.ev_type
+                event_tuple     = heappop(self.ev_queue)
+                ev_time         = event_tuple[0]
+                event           = event_tuple[1]
+                ev_type         = event.ev_type
             else:
                 # Next flow end comes earlier than next event
-                # Schedule a EvFlowEnd event
-                ev_time = self.next_end_time
-                event = EvFlowEnd(ev_time=ev_time, \
-                                  src_ip=self.next_end_flow[0], \
-                                  dst_ip=self.next_end_flow[1])
-                ev_type = 'EvFlowEnd'
+                # Immediately schedule a EvFlowEnd event and handle it!
+                ev_time         = self.next_end_time
+                event           = EvFlowEnd(ev_time=ev_time, \
+                                            src_ip=self.next_end_flow[0], \
+                                            dst_ip=self.next_end_flow[1])
+                ev_type         = 'EvFlowEnd'
 
             self.timer = ev_time
 
@@ -417,7 +425,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
             # ---- Handle Events ----
             # Handle EvFlowArrival
-            if (ev_type == 'EvFlowArrival'):
+            if   (ev_type == 'EvFlowArrival'):
                 self.handle_EvFlowArrival(ev_time, event)
 
             # Handle EvPacketIn
@@ -450,20 +458,20 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
         # Step 4: Dump list of records to pd.DataFrame, then to csv files
         if (cfg.LOG_LINK_UTIL > 0):
-            df_link_util = pd.DataFrame.from_records(self.link_util_recs, \
-                                                      columns=self.col_link_util)
+            df_link_util    = pd.DataFrame.from_records(self.link_util_recs, \
+                                                        columns=self.col_link_util)
             df_link_util.to_csv(self.fn_link_util, index=False, \
-                                 quoting=csv.QUOTE_NONNUMERIC)
+                                quoting=csv.QUOTE_NONNUMERIC)
 
         if (cfg.LOG_TABLE_UTIL > 0):
-            df_table_util = pd.DataFrame.from_records(self.table_util_recs, \
-                                                      columns=self.col_table_util)
+            df_table_util   = pd.DataFrame.from_records(self.table_util_recs, \
+                                                        columns=self.col_table_util)
             df_table_util.to_csv(self.fn_table_util, index=False, \
                                  quoting=csv.QUOTE_NONNUMERIC)
 
         if (cfg.LOG_FLOW_STATS > 0):
-            df_flow_stats = pd.DataFrame.from_records(self.flow_stats_recs, \
-                                                      columns=cfg.LOG_FLOW_STATS_FIELDS)
+            df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
+                                                        columns=cfg.LOG_FLOW_STATS_FIELDS)
             df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
                                  quoting=csv.QUOTE_NONNUMERIC)
 

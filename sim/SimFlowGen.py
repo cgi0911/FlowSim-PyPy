@@ -105,7 +105,7 @@ class SimFlowGen:
             float64: Uniform random flow size, round to integral digit.
 
         """
-        ret = np.random.uniform(low, high)
+        ret = np.random.uniform(lo, hi)
         ret = round(ret, 0)     # Round to integral digit
         return ret
 
@@ -153,18 +153,18 @@ class SimFlowGen:
         return ret
 
 
-    def get_flow_rate_uniform(self, low=cfg.FLOW_RATE_LO, high=cfg.FLOW_RATE_HI):
+    def get_flow_rate_uniform(self, lo=cfg.FLOW_RATE_LO, hi=cfg.FLOW_RATE_HI):
         """Generate flow rate according to uniform random model
 
         Args:
-            low (float64): Lower bound
-            high (float64): Upper bound
+            lo (float64): Lower bound
+            hi (float64): Upper bound
 
         Return:
             float64: Uniform random flow rate.
 
         """
-        ret = np.random.uniform(low, high)
+        ret = np.random.uniform(lo, hi)
         return ret
 
 

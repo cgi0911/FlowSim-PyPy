@@ -8,13 +8,13 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # ---- Frequently Used ----
 DIR_TOPO = './topologies/geant'
-SIM_TIME = 60.0
+SIM_TIME = 20.0
 
 DO_REROUTE = 0              # Do elephant flow rerouting (please refer to paper draft)
 
 
 # ----
-ROUTING_MODE = 'ecmp'            # Supported routing modes:
+ROUTING_MODE = 'spf'            # Supported routing modes:
                                 # 'yen': Yen's k-path algo
                                 # 'ecmp': Equal-cost multi-path
                                 # 'spf': Shortest-path first
@@ -57,7 +57,7 @@ LOG_DIR = './logs'
 
 # Specified in column order
 LOG_FLOW_STATS_FIELDS = ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', 'avg_rate', \
-                         'arrive_time', 'install_time', 'end_time', 'duration', 'resend']
+                         'arrive_time', 'install_time', 'end_time', 'duration', 'resend', 'reroute']
 
 # ----------------------------------------
 # Time-related Parameters
@@ -75,7 +75,7 @@ PERIOD_REROUTE = 1.000          # Period of rerouting
 # Flow Generation Parameters
 # ----------------------------------------
 FLOW_DST_MODEL = 'uniform'      # Uniform: Randomly pick one non-src
-FLOW_SIZE_MODEL = 'bimodal'
+FLOW_SIZE_MODEL = 'uniform'
 FLOW_INTARR_MODEL = 'saturate'  # Saturate: generate another flow immediatedly
                                 # after flow ends at a host
 FLOW_RATE_MODEL = 'uniform'

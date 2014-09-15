@@ -45,21 +45,21 @@ class SimCoreEventHandling:
 
         """
         # Create SimFlow instance
-        flow_obj = SimFlow(src_ip=event.src_ip, dst_ip=event.dst_ip, \
-                           src_node=self.hosts[event.src_ip], \
-                           dst_node=self.hosts[event.dst_ip], \
-                           flow_size=event.flow_size, flow_rate=event.flow_rate, \
-                           bytes_left=event.flow_size, \
-                           arrive_time=ev_time, update_time=ev_time, \
-                           status='requesting', resend=0)
+        flow_obj    = SimFlow(  src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                                src_node=self.hosts[event.src_ip], \
+                                dst_node=self.hosts[event.dst_ip], \
+                                flow_size=event.flow_size, flow_rate=event.flow_rate, \
+                                bytes_left=event.flow_size, \
+                                arrive_time=ev_time, update_time=ev_time, \
+                                status='requesting', resend=0)
         self.flows[(event.src_ip, event.dst_ip)] = flow_obj
 
         # EvPacketIn event
         new_ev_time = ev_time + cfg.SW_CTRL_DELAY
-        new_event = EvPacketIn(ev_time=new_ev_time, \
-                               src_ip=event.src_ip, dst_ip=event.dst_ip, \
-                               src_node=self.hosts[event.src_ip], \
-                               dst_node=self.hosts[event.dst_ip])
+        new_event   = EvPacketIn(ev_time=new_ev_time, \
+                                 src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                                 src_node=self.hosts[event.src_ip], \
+                                 dst_node=self.hosts[event.dst_ip])
         heappush(self.ev_queue, (new_ev_time, new_event))
 
 
@@ -88,16 +88,18 @@ class SimCoreEventHandling:
                 print
             # Re-send this EvPacketIn after REJECT_TIMEOUT (don't forget SW_CTRL_DELAY!)
             new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
-            new_event = event
-            new_event.ev_time = new_ev_time
-            new_event.resend += 1   # Increment resend counter
+            new_event   = EvPacketIn(   ev_time=new_ev_time, \
+                                        src_ip=event.src_ip, dst_ip=event.dst_ip,
+                                        src_node=event.src_node, dst_node=event.dst_node)
             heappush(self.ev_queue, (new_ev_time, new_event))
+            # Increment flow's resend counter
+            self.flows[(event.src_ip, event.dst_ip)].resend += 1
         else:
             new_ev_time = ev_time + cfg.CTRL_SW_DELAY
-            new_event = EvFlowInstall(ev_time=new_ev_time, \
-                                      src_ip=event.src_ip, dst_ip=event.dst_ip, \
-                                      src_node=event.src_node, dst_node=event.dst_node, \
-                                      path=path)
+            new_event   = EvFlowInstall(ev_time=new_ev_time, \
+                                        src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                                        src_node=event.src_node, dst_node=event.dst_node, \
+                                        path=path)
             heappush(self.ev_queue, (new_ev_time, new_event))
 
 
@@ -126,26 +128,25 @@ class SimCoreEventHandling:
             # Register flow entries at controller
             self.ctrl.install_entry(event.path, event.src_ip, event.dst_ip)
             # Update flow instance
-            self.flows[(event.src_ip, event.dst_ip)].status = 'active'
-            self.flows[(event.src_ip, event.dst_ip)].resend = event.resend
-            self.flows[(event.src_ip, event.dst_ip)].path = event.path
-            self.flows[(event.src_ip, event.dst_ip)].install_time = event.ev_time
-
-            # !! SimCore update here !!
+            fl = (event.src_ip, event.dst_ip)
+            self.flows[fl].status       = 'active'
+            self.flows[fl].path         = event.path
+            self.flows[fl].install_time = event.ev_time
+            # Recalculate flow rates
             self.calc_flow_rates(ev_time)
 
-
         else:
+            fl = (event.src_ip, event.dst_ip)
             if (cfg.SHOW_REJECTS > 0):
-                print 'Flow (%s, %s) is rejected. Overflow detected during installation' \
-                        %(event.src_ip, event.dst_ip)
-                print
+                print 'Flow %s is rejected. Overflow detected during installation' %(fl)
+            # Re-schedule a new EvPacketIn event after REJECT_TIMEOUT
             new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
-            new_event = EvPacketIn(ev_time=new_ev_time, \
-                                   src_ip=event.src_ip, dst_ip=event.dst_ip, \
-                                   src_node=event.src_node, dst_node=event.dst_node, \
-                                   resend=event.resend+1)
+            new_event = EvPacketIn( ev_time=new_ev_time, \
+                                    src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                                    src_node=event.src_node, dst_node=event.dst_node)
             heappush(self.ev_queue, (new_ev_time, new_event))
+            # Increment flow's resend counter
+            self.flows[fl].resend += 1
 
 
     def handle_EvFlowEnd(self, ev_time, event):
@@ -165,25 +166,27 @@ class SimCoreEventHandling:
 
         """
         fl = (event.src_ip, event.dst_ip)
-        flow_item = self.flows[fl]
-        flow_item.status = 'idle'
-        flow_item.end_time = ev_time
-        flow_item.duration = flow_item.end_time - flow_item.arrive_time
-        flow_item.avg_rate = flow_item.flow_size / (flow_item.end_time - flow_item.arrive_time)
+        flowobj           = self.flows[fl]
+        flowobj.status    = 'idle'
+        flowobj.end_time  = ev_time
+        flowobj.duration  = flowobj.end_time - flowobj.arrive_time
+        flowobj.avg_rate  = flowobj.flow_size / (flowobj.end_time - flowobj.arrive_time)
+
         # Log flow stats
         if (cfg.LOG_FLOW_STATS > 0):
-            self.flow_stats_recs.append(self.log_flow_stats(flow_item))
+            self.flow_stats_recs.append(self.log_flow_stats(flowobj))
+
         # Calculate the flow rates
         self.calc_flow_rates(ev_time)
+
         # Schedule an EvIdleTimeout event
-        new_ev_time = ev_time + cfg.IDLE_TIMEOUT
-        new_EvIdleTimeout = EvIdleTimeout(ev_time=new_ev_time, \
-                                          src_ip=event.src_ip, \
-                                          dst_ip=event.dst_ip)
+        new_ev_time         = ev_time + cfg.IDLE_TIMEOUT
+        new_EvIdleTimeout   = EvIdleTimeout(ev_time=new_ev_time, \
+                                            src_ip=event.src_ip, dst_ip=event.dst_ip )
         heappush(self.ev_queue, (new_ev_time, new_EvIdleTimeout))
         # Generate a new flow and schedule an EvFlow
-        new_ev_time = ev_time + cfg.FLOWGEN_DELAY
-        new_EvFlowArrival = self.flowgen.gen_new_flow_with_src(new_ev_time, event.src_ip, self)
+        new_ev_time         = ev_time + cfg.FLOWGEN_DELAY
+        new_EvFlowArrival   = self.flowgen.gen_new_flow_with_src(new_ev_time, event.src_ip, self)
         heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
 
 
@@ -207,11 +210,12 @@ class SimCoreEventHandling:
         self.flows[fl].remove_time = ev_time
 
         for nd in path:
-            self.topo.node[nd]['item'].remove_flow_entry(event.src_ip, event.dst_ip)
+            self.nodeobjs[nd].remove_flow_entry(event.src_ip, event.dst_ip)
             del self.ctrl.get_node_attr(nd, 'cnt_table')[fl]
 
         for lk in self.get_links_on_path(path):
-            self.topo.edge[lk[0]][lk[1]]['item'].remove_flow_entry(event.src_ip, event.dst_ip)
+            self.linkobjs[lk].remove_flow_entry(event.src_ip, event.dst_ip)
+
         del self.flows[fl]
 
 

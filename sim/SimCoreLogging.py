@@ -55,14 +55,14 @@ class SimCoreLogging:
         # Column names for csv log files
         self.col_link_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
                               'throughput'] + \
-                              [str(lk) for lk in self.edges]
+                              [str(lk) for lk in self.links]
         self.col_table_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
                               [str(nd) for nd in self.nodes]
 
 
         # Byte counters for each link
         self.link_byte_cnt = {}
-        for lk in self.edges:
+        for lk in self.links:
             self.link_byte_cnt[lk] = 0.0
 
 
@@ -91,7 +91,7 @@ class SimCoreLogging:
 
         for lk in self.link_byte_cnt:
             ret[str(lk)] = self.link_byte_cnt[lk] / \
-                           (self.get_link_attr(lk[0], lk[1], 'cap') * cfg.PERIOD_LOGGING)
+                           (self.linkobjs[lk].cap * cfg.PERIOD_LOGGING)
 
         list_usage = [self.link_byte_cnt[lk] for lk in self.link_byte_cnt]
         list_util = [ret[str(lk)] for lk in self.link_byte_cnt ]
@@ -126,7 +126,7 @@ class SimCoreLogging:
 
         # Retrieve each node's utilization
         for nd in self.topo.nodes():
-            nd_util = self.topo.node[nd]['item'].get_util()
+            nd_util = self.nodeobjs[nd].get_util()
             ret[nd] = nd_util
             list_util.append(nd_util)
 
