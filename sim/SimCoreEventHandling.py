@@ -79,7 +79,9 @@ class SimCoreEventHandling:
             None. Will schedule events to self.ev_queue if necessary.
 
         """
-        # The controller finds a path
+        self.n_EvPacketIn += 1      # Increment the counter
+
+        # The controller finds a path for the requesting flow
         path = self.ctrl.find_path(event.src_ip, event.dst_ip)
 
         if (path == []):

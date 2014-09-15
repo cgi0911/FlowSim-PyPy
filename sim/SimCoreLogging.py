@@ -65,6 +65,10 @@ class SimCoreLogging:
         for lk in self.links:
             self.link_byte_cnt[lk] = 0.0
 
+        # Extra counters for summaries
+        self.n_EvPacketIn = 0
+        self.n_Reject = 0
+
 
     def log_link_util(self, ev_time):
         """

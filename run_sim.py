@@ -4,7 +4,7 @@
 """
 run_sim.py: Top-level Run simulation.
 """
-__author__      = 'Kuan-yin Chen'
+__author__      = ['Kuan-yin Chen', 'Kejiao Sui', 'Wei Lin']
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 

@@ -76,7 +76,7 @@ PERIOD_REROUTE = 1.000          # Period of rerouting
 # Flow Generation Parameters
 # ----------------------------------------
 FLOW_DST_MODEL = 'uniform'      # Uniform: Randomly pick one non-src
-FLOW_SIZE_MODEL = 'bimodal'
+FLOW_SIZE_MODEL = 'uniform'
 FLOW_INTARR_MODEL = 'saturate'  # Saturate: generate another flow immediatedly
                                 # after flow ends at a host
 FLOW_RATE_MODEL = 'uniform'
