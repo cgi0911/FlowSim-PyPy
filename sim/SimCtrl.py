@@ -13,6 +13,7 @@ import copy as cp
 # Third-party modules
 import networkx as nx
 import pprint as pp
+import numpy as np
 # User-defined modules
 from config import *
 
@@ -159,7 +160,7 @@ class SimCtrl:
         return ret
 
 
-    def setup_path_db(self, k=cfg.K_PATH, mode=cfg.ROUTING_MODE):
+    def setup_path_db(self):
         """Build k-path database for all src-dst node pairs in topology.
 
         Args:
@@ -177,22 +178,29 @@ class SimCtrl:
               'spf': Shortest-path-first
 
         """
+        print "Building path database for all src-dst node pairs."
         path_db = {}     # empty dict
 
         # Set up k paths for each src-dst node pair
         for src in sorted(self.nodes):
             for dst in sorted(self.nodes):
                 if (not src == dst):
-                    if (mode == 'yen'):
-                        path_db[(src, dst)] = self.build_pathset_yen(src, dst, k=k)
-                    elif (mode == 'ecmp'):
+                    if (cfg.ROUTING_MODE == 'tablelb'):
+                        if (cfg.K_PATH_METHOD == 'yen'):
+                            path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
+                                                                         k=cfg.K_PATH)
+                        else:
+                            path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
+                                                                         k=cfg.K_PATH)
+                    elif (cfg.ROUTING_MODE == 'ecmp'):
                         path_db[(src, dst)] = self.build_pathset_ecmp(src, dst)
-                    elif (mode == 'spf'):
+                    elif (cfg.ROUTING_MODE == 'spf'):
                         path_db[(src, dst)] = self.build_pathset_spf(src, dst)
                     else:
                         # Default to spf
                         path_db[(src, dst)] = self.build_pathset_spf(src, dst)
 
+        print "Finished building path database"
         return path_db
 
 
@@ -259,10 +267,6 @@ class SimCtrl:
                 except:
                     spurPath = []
 
-                #if (not spurPath == []):
-                #    totalPath = rootPath + spurPath[1:]
-                #    potential_paths.append(totalPath)
-
             if (len(potential_paths) == 0):
                 break
 
@@ -272,7 +276,7 @@ class SimCtrl:
 
         ed_time = time()
 
-        if (SHOW_K_PATH_CONSTRUCTION > 0):
+        if (cfg.SHOW_K_PATH_CONSTRUCTION > 0):
             print "%d-paths from %s to %s:" %(k, src, dst), confirmed_paths
             print "Time elapsed:", ed_time-st_time
 
@@ -326,6 +330,13 @@ class SimCtrl:
 
     def find_path_ecmp(self, src_node, dst_node):
         """ECMP routing: randomly choose among several ECMP routes.
+
+        Args:
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+
+        Returns:
+            list of strings: Chosen path
         """
         # First check for feasibility of path. Make sure no overflow.
         feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
@@ -335,6 +346,47 @@ class SimCtrl:
             return rd.choice(feasible_paths)
         except:
             return []   # No path available
+
+
+    def find_path_tablelb(self, src_node, dst_node):
+        """Table-aware routing: choose the path which yields lowest
+        stdev of table util.
+
+        Args:
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+
+        Returns:
+            list of strings: Chosen path
+        """
+        # First check for feasibility of path. Make sure no overflow.
+        feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
+                          if ( self.is_feasible(path) == True )]
+
+        if (len(feasible_paths) == 1):
+            return feasible_paths[0]
+
+        # Find the best table LB path
+        array_table_size = np.array([self.get_node_attr(nd, 'table_size') \
+                                    for nd in self.nodes])
+
+        best_stdev = 999999.9   # Just a large float number
+        best_path = []
+
+        for path in feasible_paths:
+            list_usage = []
+            # Construct a table usage list assume taking this path
+            for nd in self.nodes:
+                if (nd in path):
+                    list_usage.append(self.get_table_usage(nd) + 1)
+                else:
+                    list_usage.append(self.get_table_usage(nd))
+            list_util = np.array(list_usage) / array_table_size
+            curr_stdev = np.std(list_util)
+            if (curr_stdev < best_stdev):
+                best_path = path
+
+        return best_path    # Will return [] is no path available
 
 
     def find_path(self, src_ip, dst_ip):
@@ -347,13 +399,17 @@ class SimCtrl:
             src_ip (netaddr.IPAddress)
             dst_ip (netaddr.IPAddress)
 
-        return:
+        Returns:
+            list of strings: Chosen path
 
         """
         src_node = self.hosts[src_ip]
         dst_node = self.hosts[dst_ip]
         if (cfg.ROUTING_MODE == 'ecmp'):
             path = self.find_path_ecmp(src_node, dst_node)
+        elif (cfg.ROUTING_MODE == 'tablelb'):
+            path = self.find_path_tablelb(src_node, dst_node)
         else:
             path = self.find_path_ecmp(src_node, dst_node)
         return path
+

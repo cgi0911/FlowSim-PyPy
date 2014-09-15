@@ -333,7 +333,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
             # Update all active flows on bottleneck links
             for fl in self.linkobjs[btneck_link].flows:
-                flowobj = self.flows[fl]  # Store the pointer to self.flows[fl]!
+                flowobj = self.flows[fl]    # Store the pointer to self.flows[fl]!
                                             # This makes exec time a lot shorter!
                 if (not flowobj.status == 'active'):
                     continue
