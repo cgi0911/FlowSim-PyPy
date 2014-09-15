@@ -14,12 +14,12 @@ DO_REROUTE = 0              # Do elephant flow rerouting (please refer to paper 
 
 
 # ----
-ROUTING_MODE = 'spf'        # Supported routing modes:
+ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
                                 # 'spf': Shortest-path first
-K_PATH = 2                      # Number of predefined path per src-dst pair
+K_PATH = 6                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
 # ---------------------------------------

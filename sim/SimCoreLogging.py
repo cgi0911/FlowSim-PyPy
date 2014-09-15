@@ -48,9 +48,11 @@ class SimCoreLogging:
         # File paths and names for csv log files
         if ( not os.path.exists(cfg.LOG_DIR) ):
             os.mkdir(cfg.LOG_DIR)
-        self.fn_link_util = os.path.join(cfg.LOG_DIR, 'link_util.csv')
-        self.fn_table_util = os.path.join(cfg.LOG_DIR, 'table_util.csv')
-        self.fn_flow_stats = os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
+        self.fn_link_util   =   os.path.join(cfg.LOG_DIR, 'link_util.csv')
+        self.fn_table_util  =   os.path.join(cfg.LOG_DIR, 'table_util.csv')
+        self.fn_flow_stats  =   os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
+        self.fn_summary     =   os.path.join(cfg.LOG_DIR, 'summary.csv')
+        self.fn_config      =   os.path.join(cfg.LOG_DIR, 'config.txt')
 
         # Column names for csv log files
         self.col_link_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
@@ -68,6 +70,7 @@ class SimCoreLogging:
         # Extra counters for summaries
         self.n_EvPacketIn = 0
         self.n_Reject = 0
+        self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
 
     def log_link_util(self, ev_time):
@@ -156,3 +159,47 @@ class SimCoreLogging:
 
         return ret
 
+
+    def dump_link_util(self):
+        """
+        """
+        df_link_util    = pd.DataFrame.from_records(self.link_util_recs, \
+                                                    columns=self.col_link_util)
+        df_link_util.to_csv(self.fn_link_util, index=False, \
+                            quoting=csv.QUOTE_NONNUMERIC)
+
+
+    def dump_table_util(self):
+        """
+        """
+        df_table_util   = pd.DataFrame.from_records(self.table_util_recs, \
+                                                    columns=self.col_table_util)
+        df_table_util.to_csv(self.fn_table_util, index=False, \
+                             quoting=csv.QUOTE_NONNUMERIC)
+
+
+    def dump_flow_stats(self):
+        """
+        """
+        df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
+                                                    columns=cfg.LOG_FLOW_STATS_FIELDS)
+        df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
+                             quoting=csv.QUOTE_NONNUMERIC)
+
+
+    def dump_summary(self):
+        """
+        """
+        myFile = open(self.fn_summary, 'w')
+
+        self.exec_time = self.exec_ed_time - self.exec_st_time
+
+        myFile.write('n_EvPacketIn,%d\n'    %(self.n_EvPacketIn))
+        myFile.write('n_Reject,%d\n'        %(self.n_Reject))
+        myFile.write('exec_time,%.6f\n'     %(self.exec_time))
+
+
+    def dump_config(self):
+        """
+        """
+        os.system("cp %s %s" %(fn_config, self.fn_config))

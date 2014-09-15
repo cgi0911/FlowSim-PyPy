@@ -14,7 +14,7 @@ DO_REROUTE = 0              # Do elephant flow rerouting (please refer to paper 
 
 
 # ----
-ROUTING_MODE = 'spf'        # Supported routing modes:
+ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path

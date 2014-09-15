@@ -386,6 +386,8 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         Returns:
 
         """
+        self.exec_st_time = time()
+
         # Step 1: Generate initial set of flows and queue them as FlowArrival events
         self.flowgen.gen_init_flows(self.ev_queue, self)
 
@@ -456,24 +458,25 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                 self.handle_EvLogTableUtil(ev_time, event)
 
 
+        self.exec_ed_time = time()
+
         # Step 4: Dump list of records to pd.DataFrame, then to csv files
         if (cfg.LOG_LINK_UTIL > 0):
-            df_link_util    = pd.DataFrame.from_records(self.link_util_recs, \
-                                                        columns=self.col_link_util)
-            df_link_util.to_csv(self.fn_link_util, index=False, \
-                                quoting=csv.QUOTE_NONNUMERIC)
+            self.dump_link_util()
 
         if (cfg.LOG_TABLE_UTIL > 0):
-            df_table_util   = pd.DataFrame.from_records(self.table_util_recs, \
-                                                        columns=self.col_table_util)
-            df_table_util.to_csv(self.fn_table_util, index=False, \
-                                 quoting=csv.QUOTE_NONNUMERIC)
-
+            self.dump_table_util()
+            
         if (cfg.LOG_FLOW_STATS > 0):
-            df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
-                                                        columns=cfg.LOG_FLOW_STATS_FIELDS)
-            df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
-                                 quoting=csv.QUOTE_NONNUMERIC)
+            self.dump_flow_stats()
+
+        if (cfg.LOG_SUMMARY > 0):
+            self.dump_summary()
+
+        if (cfg.LOG_CONFIG > 0):
+            self.dump_config()
+
+        
 
 
 

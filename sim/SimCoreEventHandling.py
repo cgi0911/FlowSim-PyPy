@@ -96,6 +96,8 @@ class SimCoreEventHandling:
             heappush(self.ev_queue, (new_ev_time, new_event))
             # Increment flow's resend counter
             self.flows[(event.src_ip, event.dst_ip)].resend += 1
+            # Increment loggin counter
+            self.n_Reject += 1
         else:
             new_ev_time = ev_time + cfg.CTRL_SW_DELAY
             new_event   = EvFlowInstall(ev_time=new_ev_time, \
@@ -149,6 +151,8 @@ class SimCoreEventHandling:
             heappush(self.ev_queue, (new_ev_time, new_event))
             # Increment flow's resend counter
             self.flows[fl].resend += 1
+            # Increment loggin counter
+            self.n_Reject += 1
 
 
     def handle_EvFlowEnd(self, ev_time, event):
