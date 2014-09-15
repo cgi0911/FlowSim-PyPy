@@ -53,16 +53,16 @@ class SimCoreLogging:
         self.fn_flow_stats = os.path.join(cfg.LOG_DIR, 'flow_stats.csv')
 
         # Column names for csv log files
-        self.col_link_util = ['time', 'mean', 'stddev', 'min', 'max', 'q1', 'q3', 'median', \
+        self.col_link_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
                               'throughput'] + \
-                              [str(lk) for lk in self.topo.edges()]
-        self.col_table_util = ['time', 'mean', 'stddev', 'min', 'max', 'q1', 'q3', 'median'] + \
-                              [str(nd) for nd in self.topo.nodes()]
+                              [str(lk) for lk in self.edges]
+        self.col_table_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
+                              [str(nd) for nd in self.nodes]
 
 
         # Byte counters for each link
         self.link_byte_cnt = {}
-        for lk in self.topo.edges():
+        for lk in self.edges:
             self.link_byte_cnt[lk] = 0.0
 
 
@@ -98,7 +98,7 @@ class SimCoreLogging:
 
         # Calculate statistics
         ret['mean'] = np.mean(list_util)
-        ret['stddev'] = np.std(list_util)
+        ret['stdev'] = np.std(list_util)
         ret['min'] = np.mean(list_util)
         ret['max'] = np.max(list_util)
         ret['q1'] = np.percentile(list_util, 25)
@@ -132,7 +132,7 @@ class SimCoreLogging:
 
         # Calculate statistics
         ret['mean'] = np.mean(list_util)
-        ret['stddev'] = np.std(list_util)
+        ret['stdev'] = np.std(list_util)
         ret['min'] = np.mean(list_util)
         ret['max'] = np.max(list_util)
         ret['q1'] = np.percentile(list_util, 25)

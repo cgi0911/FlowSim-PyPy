@@ -210,7 +210,7 @@ class SimCoreEventHandling:
             self.topo.node[nd]['item'].remove_flow_entry(event.src_ip, event.dst_ip)
             del self.ctrl.get_node_attr(nd, 'cnt_table')[fl]
 
-        for lk in self.get_links_in_path(path):
+        for lk in self.get_links_on_path(path):
             self.topo.edge[lk[0]][lk[1]]['item'].remove_flow_entry(event.src_ip, event.dst_ip)
         del self.flows[fl]
 

@@ -49,8 +49,10 @@ class SimCtrl:
         self.topo = nx.Graph()
         self.topo.add_nodes_from(sim_core.topo.nodes())
         self.topo.add_edges_from(sim_core.topo.edges())
+        self.nodes = self.topo.nodes()
+        self.edges = self.topo.edges()
 
-        for nd in self.topo.nodes():
+        for nd in self.nodes:
             self.set_node_attr(nd, 'table_size', sim_core.get_node_attr(nd, 'table_size'))
                                         # Table size, a.k.a. table capacity
             self.set_node_attr(nd, 'cnt_table', {})
@@ -58,7 +60,7 @@ class SimCtrl:
                                         # Key: (src_ip, dst_ip)
                                         # Value: byte counter
 
-        for lk in self.topo.edges():
+        for lk in self.edges:
             self.set_link_attr(lk[0], lk[1], 'cap', sim_core.get_link_attr(lk[0], lk[1], 'cap'))
             self.set_link_attr(lk[0], lk[1], 'usage', 0.0)
             self.set_link_attr(lk[0], lk[1], 'util', 0.0)
@@ -178,8 +180,8 @@ class SimCtrl:
         path_db = {}     # empty dict
 
         # Set up k paths for each src-dst node pair
-        for src in sorted(self.topo.nodes()):
-            for dst in sorted(self.topo.nodes()):
+        for src in sorted(self.nodes):
+            for dst in sorted(self.nodes):
                 if (not src == dst):
                     if (mode == 'yen'):
                         path_db[(src, dst)] = self.build_pathset_yen(src, dst, k=k)

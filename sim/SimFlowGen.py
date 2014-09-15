@@ -82,14 +82,19 @@ class SimFlowGen:
         """
         ret = 0.0
         if (cfg.FLOW_SIZE_MODEL == 'uniform'):
-            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LOW, cfg.FLOW_SIZE_HIGH)
+            ret = self.get_flow_size_uniform(lo=cfg.FLOW_SIZE_LO, hi=cfg.FLOW_SIZE_HI)
+        elif (cfg.FLOW_SIZE_MODEL == 'bimodal'):
+            ret = self.get_flow_size_bimodal(large_lo=cfg.FLOW_SIZE_LARGE_LO, \
+                                             large_hi=cfg.FLOW_SIZE_LARGE_HI, \
+                                             small_lo=cfg.FLOW_SIZE_SMALL_LO, \
+                                             small_hi=cfg.FLOW_SIZE_SMALL_HI)
         else:
             # Default to 'uniform'
-            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LOW, cfg.FLOW_SIZE_HIGH)
+            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LO, cfg.FLOW_SIZE_HI)
         return ret
 
 
-    def get_flow_size_uniform(self, low=cfg.FLOW_SIZE_LOW, high=cfg.FLOW_SIZE_HIGH):
+    def get_flow_size_uniform(self, lo=cfg.FLOW_SIZE_LO, hi=cfg.FLOW_SIZE_HI):
         """Generate flow size according to uniform random model
 
         Args:
@@ -105,6 +110,31 @@ class SimFlowGen:
         return ret
 
 
+    def get_flow_size_bimodal(self, large_lo=cfg.FLOW_SIZE_LARGE_LO, \
+                                    large_hi=cfg.FLOW_SIZE_LARGE_HI, \
+                                    small_lo=cfg.FLOW_SIZE_SMALL_LO, \
+                                    small_hi=cfg.FLOW_SIZE_SMALL_HI):
+        """Generate flow size according to bimodal random model
+
+        Args:
+            large_low, large_hi (float64): Lower & upper bound for large flows
+            small_low, small_hi (float64): Lower & upper bound for small flows
+
+        Return:
+            float64: Uniform random flow size, round to integral digit.
+
+        """
+        roll_dice = np.random.uniform(0, 1)
+        ret = 0.0
+
+        if(roll_dice < cfg.PROB_LARGE_FLOW):
+            ret = np.random.uniform(large_lo, large_hi)
+        else:
+            ret = np.random.uniform(small_lo, small_hi)
+        ret = round(ret, 0)
+        return ret
+
+
     def get_flow_rate(self):
         """Generate flow rate according to specified random model.
 
@@ -116,14 +146,14 @@ class SimFlowGen:
         """
         ret = 0.0
         if (cfg.FLOW_RATE_MODEL == 'uniform'):
-            ret = self.get_flow_rate_uniform(cfg.FLOW_RATE_LOW, cfg.FLOW_RATE_HIGH)
+            ret = self.get_flow_rate_uniform(cfg.FLOW_RATE_LO, cfg.FLOW_RATE_HI)
         else:
             # Default to 'uniform'
-            ret = get_flow_rate_uniform(cfg.FLOW_RATE_LOW, cfg.FLOW_RATE_HIGH)
+            ret = get_flow_rate_uniform(cfg.FLOW_RATE_LO, cfg.FLOW_RATE_HI)
         return ret
 
 
-    def get_flow_rate_uniform(self, low=cfg.FLOW_SIZE_LOW, high=cfg.FLOW_SIZE_HIGH):
+    def get_flow_rate_uniform(self, low=cfg.FLOW_RATE_LO, high=cfg.FLOW_RATE_HI):
         """Generate flow rate according to uniform random model
 
         Args:

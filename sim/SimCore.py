@@ -79,6 +79,8 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         self.nodes_df = pd.read_csv(fn_nodes, index_col=False)
         self.links_df = pd.read_csv(fn_links, index_col=False)
         self.df_to_topo(self.nodes_df, self.links_df)   # Translate pd.DataFrame into networkx.Graph
+        self.edges = self.topo.edges()
+        self.nodes = self.topo.nodes()
 
         # ---- Create hosts, assign edge switches * IPs ----
         self.hosts = {}
@@ -123,7 +125,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         for node in self.topo.nodes_iter():
             print self.topo.node[node]['item']
 
-        for link in self.topo.edges_iter():
+        for link in self.topo.edges():
             print self.topo.edge[link[0]][link[1]]['item']
 
 
@@ -227,14 +229,13 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         ret = []
 
         for i in range(len(path)-1):
-            if (path[i], path[i+1]) in self.topo.edges():
+            if (path[i], path[i+1]) in self.edges:
                 ret.append((path[i], path[i+1]))
-            elif (path[i+1], path[i]) in self.topo.edges():
+            #elif (path[i+1], path[i]) in self.edges:
+            else:
                 ret.append((path[i+1], path[i]))
 
         return ret
-
-
 
 
     def install_entries_to_path(self, path, src_ip, dst_ip):
@@ -294,24 +295,24 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
         # The following local dicts have flows as their keys (represented by 2-tuple of IPs)
         flow_asgn = {}          # Value: boolean that signals whether the flow is assigned.
-        flow_asgn_bw = {}       # Value: assigned BW for that flow
+        #flow_asgn_bw = {}       # Value: assigned BW for that flow
 
         # Initialization:
-        for lk in self.topo.edges_iter():
-            link_bw[lk] = self.get_link_attr(lk[0], lk[1], 'cap')
-            link_unasgn_bw[lk] = link_bw[lk]
-            link_n_active_flows[lk] = self.topo.edge[lk[0]][lk[1]]['item'].get_n_active_flows()
-            link_n_unasgn_flows[lk] = link_n_active_flows[lk]
+        for lk in self.edges:
+            link_unasgn_bw[lk] = link_bw[lk] \
+                               = self.get_link_attr(lk[0], lk[1], 'cap')
+            link_n_unasgn_flows[lk] = link_n_active_flows[lk] \
+                                    = self.topo.edge[lk[0]][lk[1]]['item'].get_n_active_flows()
 
         for fl in self.flows:
             if (not self.flows[fl].status == 'active'):
                 continue
             else:
                 flow_asgn[fl] = False
-                flow_asgn_bw[fl] = 0.0
+                #flow_asgn_bw[fl] = 0.0
 
         # ---- Start iterating over bottleneck links ----
-        list_unfin_links = [lk for lk in self.topo.edges() if link_n_unasgn_flows[lk] > 0]
+        list_unfin_links = [lk for lk in self.edges if link_n_unasgn_flows[lk] > 0]
                                                         # List of links that are not yet processed
         earliest_end_time = 99999999.9  # Just a very large float number
         earliest_end_flow = ('', '')
@@ -323,38 +324,44 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                                  reverse=False)[0]
             btneck_bw = link_unasgn_bw[btneck_link]/link_n_unasgn_flows[btneck_link]
 
-            # Update all flows on bottleneck links
+            # Update all active flows on bottleneck links
             for fl in self.get_link_attr(btneck_link[0], btneck_link[1], 'flows'):
-                if (fl in flow_asgn):
+                flow_item = self.flows[fl]  # Store the pointer to self.flows[fl]!
+                                            # This makes exec time a lot shorter!
+                if (not flow_item.status == 'active'):
+                    continue
+                #if (fl in flow_asgn):
+                else:
                     if (flow_asgn[fl] == False):
                         # ---- Flow operations ----
                         # Write btneck_bw to flow
                         flow_asgn[fl] = True
-                        flow_asgn_bw[fl] = btneck_bw
+                        #flow_asgn_bw[fl] = btneck_bw
+
                         # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
                         # update_time, etc.
-                        bytes_sent = self.flows[fl].curr_rate * \
-                                     (ev_time - self.flows[fl].update_time)
-                        self.flows[fl].bytes_left -= bytes_sent
-                        self.flows[fl].bytes_sent = self.flows[fl].flow_size - \
-                                                    self.flows[fl].bytes_left
-                        self.flows[fl].update_time = ev_time
-                        self.flows[fl].curr_rate = btneck_bw    # Update after...
+                        bytes_sent = flow_item.curr_rate * \
+                                     (ev_time - flow_item.update_time)
+                        flow_item.bytes_left -= bytes_sent
+                        flow_item.bytes_sent = flow_item.flow_size - \
+                                               flow_item.bytes_left
+                        flow_item.update_time = ev_time
+                        flow_item.curr_rate = btneck_bw    # Update after...
                         # Calculate next ending flow and its estimated end time
-                        est_end_time = ev_time + (self.flows[fl].bytes_left / \
-                                       self.flows[fl].curr_rate)
+                        est_end_time = ev_time + (flow_item.bytes_left / \
+                                       flow_item.curr_rate)
                         if (est_end_time < earliest_end_time):
                             earliest_end_time = est_end_time
                             earliest_end_flow = fl
 
                         # ---- Link operations ----
                         # Update link unassigned BW and link unassigned flows along the path
-                        path = self.flows[fl].path
+                        path = flow_item.path
 
                         for lk in self.get_links_on_path(path):
                             self.link_byte_cnt[lk] += bytes_sent
-                            link_unasgn_bw[lk] = link_unasgn_bw[lk] - btneck_bw
-                            link_n_unasgn_flows[lk] = link_n_unasgn_flows[lk] - 1
+                            link_unasgn_bw[lk] -= btneck_bw
+                            link_n_unasgn_flows[lk] -= 1
                             if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
                                 list_unfin_links.remove(lk)
 
