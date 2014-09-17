@@ -119,4 +119,4 @@ class FLOWGEN_ARR_CONST:
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
 
 class FLOWGEN_ARR_EXP:
-    FLOW_ARR_RATE = 100.0       # flows/sec, a.k.a. lambda
+    FLOW_ARR_RATE = 200.0       # flows/sec, a.k.a. lambda
