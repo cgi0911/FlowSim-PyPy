@@ -61,10 +61,15 @@ class SimFlow:
                     end_time = -1.0,
                     remove_time = -1.0,
                     update_time = -1.0,
-                    duration = 0.0,
+                    duration = -1.0,
                     resend = 0,
                     reroute = 0
                 ):
+        """
+
+        Extra Notes:
+            For any time-related attributes, -1.0 means not decided.
+        """
         self.src_ip         = src_ip
         self.dst_ip         = dst_ip
         self.src_node       = src_node

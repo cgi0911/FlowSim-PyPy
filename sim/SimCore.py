@@ -343,19 +343,19 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                         # ---- Flow operations ----
                         # Write btneck_bw to flow
                         flow_asgn[fl] = True
-                        #flow_asgn_bw[fl] = btneck_bw
 
                         # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
                         # update_time, etc.
-                        bytes_sent          =   flowobj.curr_rate * \
+                        bytes_sent_since_update = flowobj.curr_rate *                   \
                                                 (ev_time - flowobj.update_time)
-                        flowobj.bytes_left  -=  bytes_sent
+                        flowobj.bytes_left  -=  bytes_sent_since_update
                         flowobj.bytes_sent  =   flowobj.flow_size - flowobj.bytes_left
                         flowobj.update_time =   ev_time
-                        flowobj.curr_rate   =   btneck_bw
-                                                # Update after bytes_sent is calculated!
+                        flowobj.avg_rate    =   flowobj.bytes_sent /                    \
+                                                (ev_time - flowobj.arrive_time)
 
                         # Calculate & update next ending flow and its estimated end time
+                        flowobj.curr_rate   =   btneck_bw
                         est_end_time        =   ev_time + \
                                                 (flowobj.bytes_left / flowobj.curr_rate)
                         if (est_end_time < earliest_end_time):
@@ -367,7 +367,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                         path = flowobj.path
 
                         for lk in self.get_links_on_path(path):
-                            self.link_byte_cnt[lk]  +=  bytes_sent
+                            self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                             link_unasgn_bw[lk]      -=  btneck_bw
                             link_n_unasgn_flows[lk] -=  1
                             if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
@@ -419,7 +419,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                                             dst_ip=self.next_end_flow[1])
                 ev_type         = 'EvFlowEnd'
 
-            self.timer = ev_time
+            self.timer = self.ev_queue[0][0]    # Set timer to next event's ev_time
 
             if (cfg.SHOW_EVENTS > 0):
                 print '%.6f' %(ev_time)
@@ -457,7 +457,8 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
             elif (ev_type == 'EvLogTableUtil'):
                 self.handle_EvLogTableUtil(ev_time, event)
 
-
+        # Finalize
+        self.calc_flow_rates(self.sim_time)
         self.exec_ed_time = time()
 
         # Step 4: Dump list of records to pd.DataFrame, then to csv files
@@ -466,7 +467,7 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
 
         if (cfg.LOG_TABLE_UTIL > 0):
             self.dump_table_util()
-            
+
         if (cfg.LOG_FLOW_STATS > 0):
             self.dump_flow_stats()
 
@@ -476,7 +477,10 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
         if (cfg.LOG_CONFIG > 0):
             self.dump_config()
 
-        
+        if (cfg.SHOW_SUMMARY > 0):
+            self.show_summary()
+
+
 
 
 

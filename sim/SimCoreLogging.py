@@ -60,6 +60,10 @@ class SimCoreLogging:
                               [str(lk) for lk in self.links]
         self.col_table_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
                               [str(nd) for nd in self.nodes]
+        self.col_flow_stats = ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', \
+                               'bytes_sent', 'bytes_left', 'avg_rate', 'curr_rate', \
+                               'arrive_time', 'install_time', 'end_time', 'remove_time', \
+                               'update_time', 'duration', 'status', 'resend', 'reroute']
 
 
         # Byte counters for each link
@@ -67,8 +71,11 @@ class SimCoreLogging:
         for lk in self.links:
             self.link_byte_cnt[lk] = 0.0
 
-        # Extra counters for summaries
+        # Extra counters for summary
         self.n_EvPacketIn = 0
+        self.n_EvFlowArrival = 0
+        self.n_EvFlowEnd = 0
+        self.n_EvIdleTimeout = 0
         self.n_Reject = 0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
@@ -154,7 +161,7 @@ class SimCoreLogging:
         """
         ret = {}
 
-        for fld in cfg.LOG_FLOW_STATS_FIELDS:
+        for fld in self.col_flow_stats:
             ret[fld] = getattr(flow_item, fld)
 
         return ret
@@ -181,8 +188,13 @@ class SimCoreLogging:
     def dump_flow_stats(self):
         """
         """
+        # First, create records for all flows not yet removed from self.flows
+        for fl in self.flows:
+            self.flow_stats_recs.append(self.log_flow_stats(self.flows[fl]))
+
         df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
-                                                    columns=cfg.LOG_FLOW_STATS_FIELDS)
+                                                    columns=self.col_flow_stats)
+        df_flow_stats   = df_flow_stats.sort(['arrive_time'], ascending=True)
         df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
                              quoting=csv.QUOTE_NONNUMERIC)
 
@@ -194,12 +206,30 @@ class SimCoreLogging:
 
         self.exec_time = self.exec_ed_time - self.exec_st_time
 
-        myFile.write('n_EvPacketIn,%d\n'    %(self.n_EvPacketIn))
-        myFile.write('n_Reject,%d\n'        %(self.n_Reject))
-        myFile.write('exec_time,%.6f\n'     %(self.exec_time))
+        myFile.write('n_EvFlowArrival,%d\n'     %(self.n_EvFlowArrival))
+        myFile.write('n_EvPacketIn,%d\n'        %(self.n_EvPacketIn))
+        myFile.write('n_Reject,%d\n'            %(self.n_Reject))
+        myFile.write('n_EvFlowEnd,%d\n'         %(self.n_EvFlowEnd))
+        myFile.write('n_EvIdleTimeout,%d\n'     %(self.n_EvIdleTimeout))
+        myFile.write('exec_time,%.6f\n'         %(self.exec_time))
 
 
     def dump_config(self):
         """
         """
         os.system("cp %s %s" %(fn_config, self.fn_config))
+
+
+    def show_summary(self):
+        """
+        """
+        print
+        print '-'*40
+        print 'Summary:'
+        print '-'*40
+        print 'n_EvFlowArrival: %d'     %(self.n_EvFlowArrival)
+        print 'n_EvPacketIn: %d'        %(self.n_EvPacketIn)
+        print 'n_Reject: %d'            %(self.n_Reject)
+        print 'n_EvFlowEnd: %d'         %(self.n_EvFlowEnd)
+        print 'n_EvIdleTimeout: %d'     %(self.n_EvIdleTimeout)
+        print 'exec_time: %.6f'         %(self.exec_ed_time - self.exec_st_time)
