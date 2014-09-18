@@ -9,9 +9,9 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'fe3'
+EXP_NAME    = 'fe9'
 DIR_TOPO    = './topologies/geant'
-LOG_DIR     = './logs/fe3'
+LOG_DIR     = './logs/fe9'
 SIM_TIME    = 60.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
@@ -21,7 +21,7 @@ ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
                                 # 'spf': Shortest-path first
-K_PATH = 3                      # Number of predefined path per src-dst pair
+K_PATH = 9                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
 # ---------------------------------------

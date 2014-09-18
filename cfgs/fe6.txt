@@ -11,8 +11,8 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # ---------------------------------------
 EXP_NAME    = 'fe6'
 DIR_TOPO    = './topologies/geant'
-LOG_DIR     = './logs/fe5'
-SIM_TIME    = 15.0
+LOG_DIR     = './logs/fe6'
+SIM_TIME    = 60.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
