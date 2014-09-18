@@ -12,7 +12,7 @@ import inspect
 # Third-party modules
 import netaddr as na
 # User-defined modules
-from config import *
+from SimConfig import *
 
 
 class SimEvent:

@@ -18,7 +18,7 @@ import netaddr as na
 import pandas as pd
 import numpy as np
 # User-defined modules
-from config import *
+from SimConfig import *
 from SimCtrl import *
 from SimFlowGen import *
 from SimFlow import *

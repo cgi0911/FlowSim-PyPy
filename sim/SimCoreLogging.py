@@ -18,7 +18,7 @@ import netaddr as na
 import pandas as pd
 import numpy as np
 # User-defined modules
-from config import *
+from SimConfig import *
 from SimCtrl import *
 from SimFlowGen import *
 from SimFlow import *
@@ -56,14 +56,19 @@ class SimCoreLogging:
 
         # Column names for csv log files
         self.col_link_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
-                              'throughput'] + \
-                              [str(lk) for lk in self.links]
+                              'throughput'] + [str(lk) for lk in self.links]
         self.col_table_util = ['time', 'mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
                               [str(nd) for nd in self.nodes]
         self.col_flow_stats = ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', \
                                'bytes_sent', 'bytes_left', 'avg_rate', 'curr_rate', \
                                'arrive_time', 'install_time', 'end_time', 'remove_time', \
                                'update_time', 'duration', 'status', 'resend', 'reroute']
+        # Column names for those who are going to be averaged and logged
+        self.col_avg_link_util  =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
+                                    'throughput'] + [str(lk) for lk in self.links]
+        self.col_avg_table_util =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
+                                    [str(nd) for nd in self.nodes]
+        self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute']
 
         # Byte counters for each link
         self.link_byte_cnt = {}
@@ -170,17 +175,36 @@ class SimCoreLogging:
     def dump_link_util(self):
         """
         """
+        # Prepare a data frame from records
         df_link_util    = pd.DataFrame.from_records(self.link_util_recs, \
                                                     columns=self.col_link_util)
-        df_link_util.to_csv(self.fn_link_util, index=False, \
+
+        # Calculate an average record
+        avg_rec = {}
+        for col in self.col_avg_link_util:
+            avg_rec[col] = np.average(df_link_util[col][cfg.AVG_IGNORE_RECORDS+1:])
+        df_link_util = df_link_util.append([{}, avg_rec], ignore_index=True)
+                                            # Append an empty line, then avg record
+
+        # Dump data frame to csv file
+        df_link_util = df_link_util.to_csv(self.fn_link_util, index=False, \
                             quoting=csv.QUOTE_NONNUMERIC)
 
 
     def dump_table_util(self):
         """
         """
+        # Prepare a data frame from records
         df_table_util   = pd.DataFrame.from_records(self.table_util_recs, \
                                                     columns=self.col_table_util)
+
+        # Calculate an average record
+        avg_rec = {}
+        for col in self.col_avg_table_util:
+            avg_rec[col] = np.average(df_table_util[col][cfg.AVG_IGNORE_RECORDS+1:])
+        df_table_util = df_table_util.append([{}, avg_rec], ignore_index=True)
+                                            # Append an empty line, then avg record
+
         df_table_util.to_csv(self.fn_table_util, index=False, \
                              quoting=csv.QUOTE_NONNUMERIC)
 
@@ -195,6 +219,14 @@ class SimCoreLogging:
         df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
                                                     columns=self.col_flow_stats)
         df_flow_stats   = df_flow_stats.sort(['arrive_time'], ascending=True)
+
+        # Calculate an average record
+        avg_rec = {}
+        for col in self.col_avg_flow_stats:
+            avg_rec[col] = np.average(df_flow_stats[col])
+        df_flow_stats = df_flow_stats.append([{}, avg_rec], ignore_index=True)
+                                            # Append an empty line, then avg record
+
         df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
                              quoting=csv.QUOTE_NONNUMERIC)
 

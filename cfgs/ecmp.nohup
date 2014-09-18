@@ -1,0 +1,16 @@
+SimCore: Loading built-in modules.
+SimCore: Loading third-party modules.
+SimCore: Loading user-defined modules.
+Building path database for all src-dst node pairs.
+Finished building path database
+
+----------------------------------------
+Summary:
+----------------------------------------
+n_EvFlowArrival = 2997
+n_EvPacketIn = 2996
+n_Reject = 0
+n_EvFlowEnd = 2705
+n_EvIdleTimeout = 2520
+exec_time = 39.949848
+

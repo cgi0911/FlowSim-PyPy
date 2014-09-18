@@ -13,7 +13,7 @@ import imp
 if (len(sys.argv) > 1):
     fn_config = sys.argv[1]
 else:
-    fn_config = './config.txt'
+    fn_config = './cfgs/default_config.txt'
 
 myFile = open(fn_config)
 global cfg

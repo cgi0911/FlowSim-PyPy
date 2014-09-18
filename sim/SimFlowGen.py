@@ -12,7 +12,7 @@ import random as rd
 import numpy as np
 import netaddr as na
 # User-defined modules
-from config import *
+from SimConfig import *
 from SimEvent import *
 
 

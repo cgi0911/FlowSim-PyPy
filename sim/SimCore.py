@@ -22,7 +22,7 @@ import numpy as np
 import pprint as pp
 # User-defined modules
 print "SimCore: Loading user-defined modules."
-from config import *
+from SimConfig import *
 from SimCtrl import *
 from SimFlowGen import *
 from SimFlow import *

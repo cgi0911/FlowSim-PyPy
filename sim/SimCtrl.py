@@ -15,7 +15,7 @@ import networkx as nx
 import pprint as pp
 import numpy as np
 # User-defined modules
-from config import *
+from SimConfig import *
 
 
 class SimCtrl:
