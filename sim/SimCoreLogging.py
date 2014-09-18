@@ -65,13 +65,13 @@ class SimCoreLogging:
                                'arrive_time', 'install_time', 'end_time', 'remove_time', \
                                'update_time', 'duration', 'status', 'resend', 'reroute']
 
-
         # Byte counters for each link
         self.link_byte_cnt = {}
         for lk in self.links:
             self.link_byte_cnt[lk] = 0.0
 
-        # Extra counters for summary
+        # Parameters & counters for summary
+        self.summary_message = ''   # A string that stores the whole summary message
         self.n_EvPacketIn = 0
         self.n_EvFlowArrival = 0
         self.n_EvFlowEnd = 0
@@ -202,16 +202,16 @@ class SimCoreLogging:
     def dump_summary(self):
         """
         """
-        myFile = open(self.fn_summary, 'w')
+        summary_file = open(self.fn_summary, 'w')
 
-        self.exec_time = self.exec_ed_time - self.exec_st_time
+        self.summary_message += ('n_EvFlowArrival,%d\n'     %(self.n_EvFlowArrival))
+        self.summary_message += ('n_EvPacketIn,%d\n'        %(self.n_EvPacketIn))
+        self.summary_message += ('n_Reject,%d\n'            %(self.n_Reject))
+        self.summary_message += ('n_EvFlowEnd,%d\n'         %(self.n_EvFlowEnd))
+        self.summary_message += ('n_EvIdleTimeout,%d\n'     %(self.n_EvIdleTimeout))
+        self.summary_message += ('exec_time,%.6f\n'         %(self.exec_ed_time - self.exec_st_time))
 
-        myFile.write('n_EvFlowArrival,%d\n'     %(self.n_EvFlowArrival))
-        myFile.write('n_EvPacketIn,%d\n'        %(self.n_EvPacketIn))
-        myFile.write('n_Reject,%d\n'            %(self.n_Reject))
-        myFile.write('n_EvFlowEnd,%d\n'         %(self.n_EvFlowEnd))
-        myFile.write('n_EvIdleTimeout,%d\n'     %(self.n_EvIdleTimeout))
-        myFile.write('exec_time,%.6f\n'         %(self.exec_time))
+        summary_file.write(self.summary_message)
 
 
     def dump_config(self):
@@ -227,9 +227,13 @@ class SimCoreLogging:
         print '-'*40
         print 'Summary:'
         print '-'*40
-        print 'n_EvFlowArrival: %d'     %(self.n_EvFlowArrival)
-        print 'n_EvPacketIn: %d'        %(self.n_EvPacketIn)
-        print 'n_Reject: %d'            %(self.n_Reject)
-        print 'n_EvFlowEnd: %d'         %(self.n_EvFlowEnd)
-        print 'n_EvIdleTimeout: %d'     %(self.n_EvIdleTimeout)
-        print 'exec_time: %.6f'         %(self.exec_ed_time - self.exec_st_time)
+
+        for line in self.summary_message.split('\n'):
+            words = line.split(',')
+            if words[0] == '':
+                continue
+            else:
+                print ' = '.join(words)
+
+        print
+
