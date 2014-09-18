@@ -6,17 +6,15 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
-# ---------------------------------------
-# Frequently Used
-# ---------------------------------------
-EXP_NAME    = 'spf'
-DIR_TOPO    = './topologies/geant'
-LOG_DIR     = './logs/spf'
-SIM_TIME    = 15.0
+# ---- Frequently Used ----
+DIR_TOPO = './topologies/geant'
+SIM_TIME = 60.0
 
-DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
+DO_REROUTE = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'spf'        # Supported routing modes:
+
+# ----
+ROUTING_MODE = 'ecmp'        # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
@@ -28,7 +26,7 @@ K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 500
+TABLESIZE_PER_SW = 400
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
@@ -56,9 +54,8 @@ LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL = 1
 LOG_FLOW_STATS = 1
 LOG_SUMMARY = 1
-AVG_IGNORE_RECORDS = 100        # Ignore first ? columns when doing average
 
-
+LOG_DIR = './logs'
 
 # ----------------------------------------
 # Time-related Parameters

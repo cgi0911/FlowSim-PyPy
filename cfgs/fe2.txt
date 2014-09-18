@@ -9,14 +9,14 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'tablelb'
+EXP_NAME    = 'fe2'
 DIR_TOPO    = './topologies/geant'
 LOG_DIR     = './logs/fe2'
 SIM_TIME    = 15.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'ecmp'        # Supported routing modes:
+ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
