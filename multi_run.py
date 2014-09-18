@@ -16,15 +16,32 @@ TASKS = ['./cfgs/ecmp.txt', './cfgs/spf.txt', './cfgs/fe2.txt',\
          './cfgs/fe3.txt', './cfgs/fe4.txt', './cfgs/fe5.txt',\
          './cfgs/fe6.txt', './cfgs/fe7.txt', './cfgs/fe8.txt',\
          './cfgs/fe9.txt', './cfgs/fe10.txt']
+NOHUP_PATH = './nohup'
 
-def do_work(fn_config):
-    cmd = "nohup ./run_sim.py " + fn_config + ' > ' + \
-          fn_config.replace('.txt', '.nohup').replace('cfgs', 'nohups')
-    print cmd
-    os.system(cmd)
+def do_work(task_queue):
+    while True:
+        fn_config = task_queue.get()
+        if (fn_config == 'None'):
+            break
 
+        fn_nohup = os.path.join(NOHUP_PATH, os.path.split(fn_config)[-1].replace('.txt', '.nohup')
+        cmd = "nohup ./run_sim.py %s >%s " %(fn_config, fn_nohup)
+        print cmd
+        os.system(cmd)
 
 if __name__ == '__main__':
-    myPool = mp.Pool(N_WORKERS)
-    myPool.map(do_work, TASKS)
+    task_queue = mp.Queue()
+    for t in TASKS:
+        task_queue.put(t)
+    for i in range(N_WORKERS):
+        task_queue.put('None')
 
+    list_proc = []
+    for i in range(N_WORKERS):
+        list_proc.append(mp.Process(target=do_work, args=(task_queue,)))
+
+    for p in list_proc:
+        p.start()
+
+    for p in list_proc:
+        p.join()

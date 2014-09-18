@@ -9,10 +9,10 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'fe2'
+EXP_NAME    = 'fe5'
 DIR_TOPO    = './topologies/geant'
-LOG_DIR     = './logs/fe2'
-SIM_TIME    = 60.0
+LOG_DIR     = './logs/fe5'
+SIM_TIME    = 5.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
@@ -21,7 +21,7 @@ ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
                                 # 'spf': Shortest-path first
-K_PATH = 2                      # Number of predefined path per src-dst pair
+K_PATH = 5                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
 # ---------------------------------------
@@ -116,10 +116,10 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.1
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 100.0       # flows/sec
+    FLOW_ARR_RATE = 200.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
 
 class FLOWGEN_ARR_EXP:
-    FLOW_ARR_RATE = 100.0       # flows/sec, a.k.a. lambda
+    FLOW_ARR_RATE = 200.0       # flows/sec, a.k.a. lambda

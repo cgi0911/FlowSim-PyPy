@@ -403,6 +403,9 @@ class SimCore(SimCoreEventHandling, SimCoreLogging):
                                      EvReroute(ev_time=cfg.PERIOD_REROUTE)))
 
         # Step 3: Main loop of simulation
+        print "Logging to folder: %s" %(cfg.LOG_DIR)
+        print "Start simulation. Experiment name: %s" %(cfg.EXP_NAME)
+
         while (self.timer <= self.sim_time):
             if (self.ev_queue[0][0] < self.next_end_time):
                 # Next event comes earlier than next flow end
