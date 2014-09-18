@@ -32,6 +32,13 @@ class SimLink:
                    else cfg.CAP_PER_LINK
         self.flows = {}
 
+        # These variables are used in calc_flow_rates
+        self.unasgn_b       = self.cap
+        self.n_active_flows = 0
+        self.n_unsagn_flows = 0
+        self.bw_per_flow    = 0.0
+        self.processed      = False
+
 
     def __str__(self):
         """

@@ -91,6 +91,9 @@ class SimFlow:
         self.resend         = resend
         self.reroute        = reroute
 
+        # These variables are used in calc_flow_rates
+        self.assigned       = False
+
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line
         ret =   'Flow (%s -> %s)\n'         %(self.src_ip, self.dst_ip) + \
@@ -116,3 +119,22 @@ class SimFlow:
         return ret
 
 
+    def update_flow(self, ev_time, asgn_bw):
+        """
+        """
+        # Calculate past behavior from update_time to now
+        bytes_sent_since_update =   self.curr_rate *                 \
+                                    (ev_time - self.update_time)
+        self.bytes_left         -=  bytes_sent_since_update
+        self.bytes_sent         =   self.flow_size - self.bytes_left
+        self.update_time        =   ev_time
+        self.avg_rate           =   self.bytes_sent /                \
+                                (ev_time - self.arrive_time)
+        # Update curr_rate & assigned flag
+        self.curr_rate          =   asgn_bw
+        self.assigned           =   True
+        # Estimate this flow's end time
+        est_end_time            =   ev_time + \
+                                    (self.bytes_left / self.curr_rate)
+
+        return est_end_time
