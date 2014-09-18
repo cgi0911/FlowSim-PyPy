@@ -12,7 +12,7 @@ import os
 import multiprocessing as mp
 
 N_WORKERS = 3
-TASKS = ['./cfgs/ecmp.txt', './cfgs/spf.txt', './cfgs/fe2.txt'\
+TASKS = ['./cfgs/ecmp.txt', './cfgs/spf.txt', './cfgs/fe2.txt',\
          './cfgs/fe3.txt', './cfgs/fe4.txt', './cfgs/fe5.txt',\
          './cfgs/fe6.txt', './cfgs/fe7.txt', './cfgs/fe8.txt',\
          './cfgs/fe9.txt', './cfgs/fe10.txt']

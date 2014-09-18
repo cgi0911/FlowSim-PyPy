@@ -10,6 +10,6 @@ Traceback (most recent call last):
     self.handle_EvFlowInstall(ev_time, event)
   File "/home/cgi0911/Workspace/FlowSim/flowsim/sim/SimCoreEventHandling.py", line 151, in handle_EvFlowInstall
     self.calc_flow_rates(ev_time)
-  File "/home/cgi0911/Workspace/FlowSim/flowsim/sim/SimCore.py", line 351, in calc_flow_rates
-    flowobj.bytes_left  -=  bytes_sent_since_update
+  File "/home/cgi0911/Workspace/FlowSim/flowsim/sim/SimCore.py", line 316, in calc_flow_rates
+    if (not self.flows[fl].status == 'active'):
 KeyboardInterrupt
