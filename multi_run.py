@@ -16,7 +16,7 @@ TASKS = ['./cfgs/ecmp.txt', './cfgs/spf.txt', './cfgs/fe2.txt',\
          './cfgs/fe3.txt', './cfgs/fe4.txt', './cfgs/fe5.txt',\
          './cfgs/fe6.txt', './cfgs/fe7.txt', './cfgs/fe8.txt',\
          './cfgs/fe9.txt', './cfgs/fe10.txt']
-NOHUP_PATH = './nohup'
+NOHUP_PATH = './nohups'
 
 def do_work(task_queue):
     while True:
@@ -24,8 +24,9 @@ def do_work(task_queue):
         if (fn_config == 'None'):
             break
 
-        fn_nohup = os.path.join(NOHUP_PATH, os.path.split(fn_config)[-1].replace('.txt', '.nohup')
+        fn_nohup = os.path.join(NOHUP_PATH, os.path.split(fn_config)[-1].replace('.txt', '.nohup'))
         cmd = "nohup ./run_sim.py %s >%s " %(fn_config, fn_nohup)
+        #cmd = "./run_sim.py %s" %(fn_config)
         print cmd
         os.system(cmd)
 
@@ -45,3 +46,5 @@ if __name__ == '__main__':
 
     for p in list_proc:
         p.join()
+
+    os.system("rm ./temp/*")

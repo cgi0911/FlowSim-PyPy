@@ -1,0 +1,15 @@
+  File "./multi_run.py", line 28
+    cmd = "nohup ./run_sim.py %s >%s " %(fn_config, fn_nohup)
+      ^
+SyntaxError: invalid syntax
+nohup ./run_sim.py ./cfgs/spf.txt >./nohups/spf.nohup 
+nohup ./run_sim.py ./cfgs/fe5.txt >./nohups/fe5.nohup 
+nohup ./run_sim.py ./cfgs/fe8.txt >./nohups/fe8.nohup 
+nohup ./run_sim.py ./cfgs/ecmp.txt >./nohups/ecmp.nohup 
+nohup ./run_sim.py ./cfgs/fe3.txt >./nohups/fe3.nohup 
+nohup ./run_sim.py ./cfgs/fe6.txt >./nohups/fe6.nohup 
+nohup ./run_sim.py ./cfgs/fe9.txt >./nohups/fe9.nohup 
+nohup ./run_sim.py ./cfgs/fe2.txt >./nohups/fe2.nohup 
+nohup ./run_sim.py ./cfgs/fe4.txt >./nohups/fe4.nohup 
+nohup ./run_sim.py ./cfgs/fe7.txt >./nohups/fe7.nohup 
+nohup ./run_sim.py ./cfgs/fe10.txt >./nohups/fe10.nohup 
