@@ -381,11 +381,11 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         if (cfg.LOG_FLOW_STATS > 0):
             self.dump_flow_stats()
 
-        if (cfg.LOG_SUMMARY > 0):
-            self.dump_summary()
-
         if (cfg.LOG_CONFIG > 0):
             self.dump_config()
+
+        if (cfg.LOG_SUMMARY > 0):
+            self.dump_summary()
 
         if (cfg.SHOW_SUMMARY > 0):
             self.show_summary()

@@ -65,13 +65,15 @@ class SimCoreEventHandling:
         heappush(self.ev_queue, (new_ev_time, new_EvPacketIn))
 
         # If arrival model is "const" or "exp", generate a new flow and schedule an EvFlowArrival.
+
         if cfg.FLOWGEN_ARR_MODEL == 'const':
             new_ev_time, new_EvFlowArrival = self.flowgen.gen_new_flow_arr_const(    \
                                              ev_time, self)
+            heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
         elif cfg.FLOWGEN_ARR_MODEL == 'exp':
             new_ev_time, new_EvFlowArrival = self.flowgen.gen_new_flow_arr_exp(    \
                                              ev_time, self)
-        heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
+            heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
 
 
     def handle_EvPacketIn(self, ev_time, event):

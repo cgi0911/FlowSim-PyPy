@@ -137,4 +137,4 @@ class SimFlow:
         est_end_time            =   ev_time + \
                                     (self.bytes_left / self.curr_rate)
 
-        return est_end_time
+        return est_end_time, bytes_sent_since_update

@@ -10,14 +10,14 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'ecmp'
+EXP_NAME    = 'fe4'
 DIR_TOPO    = './topologies/geant'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 60.0
+SIM_TIME    = 20.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'ecmp'        # Supported routing modes:
+ROUTING_MODE = 'tablelb'        # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
@@ -29,11 +29,12 @@ K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 250
+TABLESIZE_PER_SW = 200
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
-CAP_PER_LINK = 1e9
+CAP_PER_LINK = 1.0
+CAP_UNIT     = 1.0e9    # Gbps
 
 
 # ----------------------------------------
@@ -107,21 +108,21 @@ class FLOWGEN_SIZERATE_UNIFORM:
 
 class FLOWGEN_SIZERATE_BIMODAL:
     PROB_LARGE_FLOW = 0.1
-    FLOW_SIZE_LARGE_LO = 5e8
-    FLOW_SIZE_LARGE_HI = 10e8
-    FLOW_RATE_LARGE_LO = 1e9
-    FLOW_RATE_LARGE_HI = 1e9
-    FLOW_SIZE_SMALL_LO = 5e6
-    FLOW_SIZE_SMALL_HI = 10e6
-    FLOW_RATE_SMALL_LO = 1e8
-    FLOW_RATE_SMALL_HI = 1e8
+    FLOW_SIZE_LARGE_LO = 5.0e8
+    FLOW_SIZE_LARGE_HI = 10.0e8
+    FLOW_RATE_LARGE_LO = 1.0e9
+    FLOW_RATE_LARGE_HI = 1.0e9
+    FLOW_SIZE_SMALL_LO = 5.0e6
+    FLOW_SIZE_SMALL_HI = 10.0e6
+    FLOW_RATE_SMALL_LO = 5.0e7
+    FLOW_RATE_SMALL_HI = 5.0e7
 
 class FLOWGEN_ARR_SATURATE:
     INIT_FLOWS_SPREAD = 1.0
     NEXT_FLOW_DELAY = 0.1
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 200.0       # flows/sec
+    FLOW_ARR_RATE = 150.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

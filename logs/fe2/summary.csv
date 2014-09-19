@@ -1,0 +1,6 @@
+n_EvFlowArrival,5994
+n_EvPacketIn,6012
+n_Reject,19
+n_EvFlowEnd,5728
+n_EvIdleTimeout,5728
+exec_time,64.046741

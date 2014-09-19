@@ -28,8 +28,8 @@ class SimLink:
         """
         self.node1 = kwargs.get('node1', 'noname')
         self.node2 = kwargs.get('node2', 'noname')
-        self.cap = kwargs.get('cap', 1e9) if (not cfg.OVERRIDE_CAP)     \
-                   else cfg.CAP_PER_LINK
+        self.cap = kwargs.get('cap', 1e9) * cfg.CAP_UNIT if (not cfg.OVERRIDE_CAP)     \
+                   else cfg.CAP_PER_LINK * cfg.CAP_UNIT
         self.flows = {}
 
         # These variables are used in calc_flow_rates

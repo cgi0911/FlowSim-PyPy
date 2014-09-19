@@ -78,7 +78,8 @@ class SimCoreCalculation:
                 n_unprocessed_links -= 1
 
         while True:
-            #print n_unprocessed_links, len(heap_flows)
+            if (n_unprocessed_links == 0 or len(heap_flows) == 0):
+                break
 
             if (heap_flows[0][1].assigned == True):
                 heappop(heap_flows)
@@ -95,7 +96,8 @@ class SimCoreCalculation:
                 heappop(heap_flows)
 
                 # Update this flow
-                est_end_time = mice_flowobj.update_flow(ev_time, mice_bw)
+                est_end_time, bytes_sent_since_update = \
+                        mice_flowobj.update_flow(ev_time, mice_bw)
 
                 if (est_end_time < earliest_end_time):
                     earliest_end_time = est_end_time
@@ -103,6 +105,7 @@ class SimCoreCalculation:
 
                 # Update links traversed by the flow
                 for lk in self.get_links_on_path(mice_flowobj.path):
+                    self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                     linkobj                 =   self.linkobjs[lk]
                     linkobj.unasgn_bw       -=  mice_bw
                     linkobj.n_unasgn_flows  -=  1
@@ -132,13 +135,15 @@ class SimCoreCalculation:
 
                     else:
                         # Calculate estimated end time of this flow
-                        est_end_time = flowobj.update_flow(ev_time, btnk_bw)
+                        est_end_time, bytes_sent_since_update = \
+                                flowobj.update_flow(ev_time, btnk_bw)
                         if (est_end_time < earliest_end_time):
                             earliest_end_time = est_end_time
                             earliest_end_flow = fl
 
                         # Update links traversed by this flow
                         for lk in self.get_links_on_path(flowobj.path):
+                            self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                             linkobj                 =   self.linkobjs[lk]
                             linkobj.unasgn_bw       -=  btnk_bw
                             linkobj.n_unasgn_flows  -=  1
@@ -153,10 +158,10 @@ class SimCoreCalculation:
                                     recalc_btnk = True
                                 n_unprocessed_links -=  1
 
-            if (n_unprocessed_links == 0 or len(heap_flows) == 0):
-                break
+            #if (n_unprocessed_links == 0 or len(heap_flows) == 0):
+            #    break
 
-            if (recalc_btnk == True):
+            if (n_unprocessed_links > 0 and recalc_btnk == True):
                 #print "Recalculate btnk"
                 btnk_link = min([lk for lk in self.links \
                                  if self.linkobjs[lk].n_unasgn_flows > 0], \
@@ -169,7 +174,7 @@ class SimCoreCalculation:
         self.next_end_flow = earliest_end_flow
 
 
-    def calc_flow_rates_saturation(self, ev_time):
+    def calc_flow_rates_src_unlimited(self, ev_time):
         """Calculate flow rates (according to DevoFlow Algorithm 1). Flows can transmit
         as fast as possible under link capacity constraints and max-min fairness.
 
@@ -270,5 +275,5 @@ class SimCoreCalculation:
         if (cfg.SRC_LIMITED > 0):
             self.calc_flow_rates_src_limited(ev_time)
         else:
-            self.calc_flow_rates_saturation(ev_time)
+            self.calc_flow_rates_src_unlimited(ev_time)
 
