@@ -141,13 +141,18 @@ class SimCoreEventHandling:
 
         if (is_feasible == True):
             # Register entries at SimSwitch & SimLink instances
-            self.install_entries_to_path(event.path, event.src_ip, event.dst_ip)
+            list_links                  = self.get_links_on_path(event.path)
+            self.install_entries_to_path(event.path, list_links, event.src_ip, event.dst_ip)
             # Register flow entries at controller
             self.ctrl.install_entry(event.path, event.src_ip, event.dst_ip)
             # Update flow instance
             fl = (event.src_ip, event.dst_ip)
             self.flows[fl].status       = 'active'
             self.flows[fl].path         = event.path
+
+            self.flows[fl].links        = list_links
+            for lk in list_links:
+                self.linkobjs[lk].n_active_flows += 1
             self.flows[fl].install_time = event.ev_time
             # Recalculate flow rates
             self.calc_flow_rates(ev_time)
@@ -196,6 +201,9 @@ class SimCoreEventHandling:
         flowobj.bytes_sent  = flowobj.flow_size
         flowobj.duration    = flowobj.end_time - flowobj.arrive_time
         flowobj.avg_rate    = flowobj.flow_size / (flowobj.end_time - flowobj.arrive_time)
+        #for lk in self.get_links_on_path(flowobj.path):
+        for lk in flowobj.links:
+                self.linkobjs[lk].n_active_flows -= 1
 
         # Calculate the flow rates
         self.calc_flow_rates(ev_time)
@@ -231,6 +239,7 @@ class SimCoreEventHandling:
         fl      = (event.src_ip, event.dst_ip)
         flowobj = self.flows[fl]
         path    = flowobj.path
+        list_links = flowobj.links
         flowobj.remove_time = ev_time
         flowobj.update_time = ev_time
         flowobj.status      = 'removed'
@@ -243,7 +252,8 @@ class SimCoreEventHandling:
             self.nodeobjs[nd].remove_flow_entry(event.src_ip, event.dst_ip)
             del self.ctrl.get_node_attr(nd, 'cnt_table')[fl]
 
-        for lk in self.get_links_on_path(path):
+        #for lk in self.get_links_on_path(path):
+        for lk in list_links:
             self.linkobjs[lk].remove_flow_entry(event.src_ip, event.dst_ip)
 
         del self.flows[fl]
@@ -291,7 +301,9 @@ class SimCoreEventHandling:
         """
         """
         if (cfg.LOG_LINK_UTIL > 0):
-            self.link_util_recs.append(self.log_link_util(ev_time))
+            records = self.log_link_util(ev_time)
+            self.link_util_recs.append(records[0])
+            self.link_flows_recs.append(records[1])
             new_ev_time = ev_time + cfg.PERIOD_LOGGING
             heappush(self.ev_queue, (new_ev_time, EvLogLinkUtil(ev_time=new_ev_time)))
 

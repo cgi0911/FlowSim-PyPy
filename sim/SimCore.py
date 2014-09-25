@@ -249,11 +249,12 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         return ret
 
 
-    def install_entries_to_path(self, path, src_ip, dst_ip):
+    def install_entries_to_path(self, path, links, src_ip, dst_ip):
         """Install flow entries to the specified path.
 
         Args:
-            path (list of string): Path of the flow
+            path (list of str): Path
+            links (list of 2-tuples): Links along the path
             src_ip (netaddr.IPAddress)
             dst_ip (netaddr.IPAddress)
 
@@ -264,7 +265,8 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         for nd in path:
             self.nodeobjs[nd].install_flow_entry(src_ip, dst_ip)
 
-        for lk in self.get_links_on_path(path):
+        #for lk in self.get_links_on_path(path):
+        for lk in links:
             flowobj = self.flows[(src_ip, dst_ip)]
             self.linkobjs[lk].install_entry(src_ip, dst_ip, flowobj)
 

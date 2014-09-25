@@ -104,7 +104,8 @@ class SimCoreCalculation:
                     earliest_end_flow = mice_flowkey
 
                 # Update links traversed by the flow
-                for lk in self.get_links_on_path(mice_flowobj.path):
+                #for lk in self.get_links_on_path(mice_flowobj.path):
+                for lk in mice_flowobj.links:
                     self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                     linkobj                 =   self.linkobjs[lk]
                     linkobj.unasgn_bw       -=  mice_bw
@@ -142,7 +143,8 @@ class SimCoreCalculation:
                             earliest_end_flow = fl
 
                         # Update links traversed by this flow
-                        for lk in self.get_links_on_path(flowobj.path):
+                        #for lk in self.get_links_on_path(flowobj.path):
+                        for lk in flowobj.links:
                             self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                             linkobj                 =   self.linkobjs[lk]
                             linkobj.unasgn_bw       -=  btnk_bw
@@ -255,9 +257,10 @@ class SimCoreCalculation:
 
                         # ---- Link operations ----
                         # Update link unassigned BW and link unassigned flows along the path
-                        path = flowobj.path
+                        #path = flowobj.path
 
-                        for lk in self.get_links_on_path(path):
+                        #for lk in self.get_links_on_path(path):
+                        for lk in flowobj.links:
                             self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                             link_unasgn_bw[lk]      -=  btneck_bw
                             link_n_unasgn_flows[lk] -=  1

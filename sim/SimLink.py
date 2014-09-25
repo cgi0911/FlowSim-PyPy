@@ -46,8 +46,7 @@ class SimLink:
         ret =   'Link (%s, %s):\n'                    %(self.node1, self.node2) +     \
                 '\tcap: %.6e\n'                       %(self.cap) +   \
                 '\t# of registered flows:%d\n'        %(len(self.flows)) +  \
-                '\t# of active flows:%d\n'            %(len([fl for fl in self.flows \
-                                                           if self.flows[fl].status=='active']))+  \
+                '\t# of active flows:%d\n'            %(self.n_active_flows)+  \
                 '\t# of idling flows:%d\n'            %(len([fl for fl in self.flows \
                                                            if self.flows[fl].status=='idle']))
         return ret
@@ -71,9 +70,10 @@ class SimLink:
         """
         ret = 0
 
-        for fl in self.flows:
-            if (self.flows[fl].status == 'active'):
-                ret += 1
+        #for fl in self.flows:
+        #    if (self.flows[fl].status == 'active'):
+        #        ret += 1
+        ret = self.n_active_flows
 
         return ret
 

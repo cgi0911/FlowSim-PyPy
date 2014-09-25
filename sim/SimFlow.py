@@ -49,6 +49,7 @@ class SimFlow:
                     src_node='',
                     dst_node='',
                     path=[],
+                    links=[],
                     flow_size=0.0,
                     flow_rate=0.0,
                     curr_rate=0.0,
@@ -75,6 +76,7 @@ class SimFlow:
         self.src_node       = src_node
         self.dst_node       = dst_node
         self.path           = path
+        self.links          = links
         self.flow_size      = flow_size
         self.flow_rate      = flow_rate
         self.curr_rate      = curr_rate
