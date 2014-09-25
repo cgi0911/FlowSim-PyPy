@@ -15,7 +15,7 @@ import os
 if (len(sys.argv) > 1):
     fn_config = sys.argv[1]
 else:
-    fn_config = './cfgs/default_config.txt'
+    fn_config = './cfgs/default.txt'
 
 # Create precompiled module file name. If the file exists, remove it.
 # The actual precompiled file name is fn_precompile + 'c'
