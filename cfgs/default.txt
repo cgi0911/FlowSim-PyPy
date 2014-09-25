@@ -31,7 +31,7 @@ DO_PROFILING = False            # Do code profiling for this experiment
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 100
+TABLESIZE_PER_SW = 200
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True

@@ -1,0 +1,10 @@
+ROUTING_MODE,tablelb
+    K_PATH,2
+    K_PATH_METHOD,yen
+DO_REROUTE,0
+n_EvFlowArrival,30027
+n_EvPacketIn,30239
+n_Reject,215
+n_EvFlowEnd,29914
+n_EvIdleTimeout,29423
+exec_time,297.423549
