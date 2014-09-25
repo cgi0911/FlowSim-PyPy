@@ -71,7 +71,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         self.sim_time = cfg.SIM_TIME
         self.timer = 0.0
         self.ev_queue = []
-        np.random.seed(int(time()*100))
+        np.random.seed(int(time()))
 
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
         self.topo = nx.Graph()
