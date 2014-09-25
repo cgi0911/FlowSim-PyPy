@@ -10,6 +10,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 print "SimCore: Loading built-in modules."
 import os
 import csv
+import sys
 from heapq import heappush, heappop
 from math import ceil, log
 from time import time
@@ -315,7 +316,17 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         print "Logging to folder: %s" %(cfg.LOG_DIR)
         print "Start simulation. Experiment name: %s" %(cfg.EXP_NAME)
 
+        next_prog_time = 0.0
+
         while (self.timer <= self.sim_time):
+            # Show progress
+            if(cfg.SHOW_PROGRESS > 0):
+                if (self.timer >= next_prog_time):
+                    percentage = self.timer * 100.0 / cfg.SIM_TIME
+                    sys.stdout.write("Simulation Progress: %03.2f%%\r" %(percentage))
+                    sys.stdout.flush()
+                    next_prog_time = np.ceil(percentage) * cfg.SIM_TIME / 100.0
+
             if (self.ev_queue[0][0] < self.next_end_time):
                 # Next event comes earlier than next flow end
                 event_tuple     = heappop(self.ev_queue)
