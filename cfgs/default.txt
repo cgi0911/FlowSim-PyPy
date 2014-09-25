@@ -13,11 +13,11 @@ import os
 EXP_NAME    = 'default'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 20.0
+SIM_TIME    = 60.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'ecmp'           # Supported routing modes:
+ROUTING_MODE = 'tablelb'           # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
@@ -25,18 +25,18 @@ ROUTING_MODE = 'ecmp'           # Supported routing modes:
 K_PATH = 2                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-DO_PROFILING = True             # Do code profiling for this experiment
+DO_PROFILING = False            # Do code profiling for this experiment
 
 # ---------------------------------------
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 1000
+TABLESIZE_PER_SW = 100
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
 CAP_PER_LINK = 1.0
-CAP_UNIT     = 1.0e9    # Gbps
+CAP_UNIT     = 1.0e10    # Gbps
 
 
 # ----------------------------------------
@@ -60,7 +60,7 @@ LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL = 1
 LOG_FLOW_STATS = 1
 LOG_SUMMARY = 1
-AVG_IGNORE_RECORDS = 100        # Ignore first ? columns when doing average
+AVG_IGNORE_RECORDS = 150        # Ignore first ? columns when doing average
 
 
 
@@ -124,7 +124,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.1
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 400.0       # flows/sec
+    FLOW_ARR_RATE = 500.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

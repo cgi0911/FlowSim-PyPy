@@ -153,6 +153,7 @@ class SimCoreEventHandling:
             self.flows[fl].links        = list_links
             for lk in list_links:
                 self.linkobjs[lk].n_active_flows += 1
+            self.n_active_flows += 1
             self.flows[fl].install_time = event.ev_time
             # Recalculate flow rates
             self.calc_flow_rates(ev_time)
@@ -204,6 +205,7 @@ class SimCoreEventHandling:
         #for lk in self.get_links_on_path(flowobj.path):
         for lk in flowobj.links:
                 self.linkobjs[lk].n_active_flows -= 1
+        self.n_active_flows -= 1
 
         # Calculate the flow rates
         self.calc_flow_rates(ev_time)

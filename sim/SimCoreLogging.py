@@ -88,6 +88,7 @@ class SimCoreLogging:
         self.n_EvFlowEnd = 0
         self.n_EvIdleTimeout = 0
         self.n_Reject = 0
+        self.n_active_flows = 0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
 
@@ -252,8 +253,14 @@ class SimCoreLogging:
         avg_rec = {}
         for col in self.col_avg_flow_stats:
             avg_rec[col] = np.average(df_flow_stats[col])
+        
+        finished_durations = [x for x in df_flow_stats['duration'] if x > 0]
+        avg_rec['duration'] = np.average(finished_durations)
+
         df_flow_stats = df_flow_stats.append([{}, avg_rec], ignore_index=True)
                                             # Append an empty line, then avg record
+
+
 
         df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
                              quoting=csv.QUOTE_NONNUMERIC)
