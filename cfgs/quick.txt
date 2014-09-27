@@ -13,7 +13,7 @@ import os
 EXP_NAME    = 'quick'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 20.0
+SIM_TIME    = 15.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
@@ -35,7 +35,7 @@ TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
-CAP_PER_LINK = 1.0
+CAP_PER_LINK = 10.0
 CAP_UNIT     = 1.0e9    # Gbps
 
 

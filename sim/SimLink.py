@@ -9,7 +9,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 # Third-party modules
 # User-defined modules
-from SimConfig import *
+import SimConfig as cfg
 
 
 class SimLink:

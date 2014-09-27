@@ -7,23 +7,18 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
 # Built-in modules
-print "SimCore: Loading built-in modules."
 import os
 import csv
 import sys
 from heapq import heappush, heappop
 from math import ceil, log
 from time import time
+import random
 # Third-party modules
-print "SimCore: Loading third-party modules."
 import networkx as nx
 import netaddr as na
-import pandas as pd
-import numpy as np
-import pprint as pp
 # User-defined modules
-print "SimCore: Loading user-defined modules."
-from SimConfig import *
+import SimConfig as cfg
 from SimCtrl import *
 from SimFlowGen import *
 from SimFlow import *
@@ -72,7 +67,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         self.sim_time = cfg.SIM_TIME
         self.timer = 0.0
         self.ev_queue = []
-        np.random.seed(int(time()))
+        random.seed(int(time()))
 
         # ---- Parse CSV and set up topology graph's nodes and edges accordingly ----
         self.topo = nx.Graph()
@@ -81,7 +76,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         self.nodeobjs = {}
         self.linkobjs = {}
         self.link_mapper = {}
-        self.build_topo()   # Translate pd.DataFrame into networkx.Graph
+        self.build_topo()   # Translate csv files into networkx.Graph
 
         # ---- Create hosts, assign edge switches * IPs ----
         self.hosts = {}
@@ -143,17 +138,32 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
             None. self.topo is modified on site.
 
         """
-        nodes_df = pd.read_csv(os.path.join(cfg.DIR_TOPO, 'nodes.csv'), index_col=False)
-        links_df = pd.read_csv(os.path.join(cfg.DIR_TOPO, 'links.csv'), index_col=False)
+        def dict_convert(myDict):
+            ret = {}
+            for k in myDict:
+                try:
+                    ret[k] = int(myDict[k])
+                except:
+                    try:
+                        ret[k] = float(myDict[k])
+                    except:
+                        ret[k] = myDict[k]
+            return ret
 
-        for myRow in nodes_df.iterrows():
-            rowdict = dict(myRow[1])    # myRow is a 2-tuple: (index, dict of params)
+
+        fn_nodes = os.path.join(cfg.DIR_TOPO, 'nodes.csv')
+        fn_links = os.path.join(cfg.DIR_TOPO, 'links.csv')
+        nodes_rd = csv.DictReader(open(fn_nodes, 'rU'))
+        links_rd = csv.DictReader(open(fn_links, 'rU'))
+
+        for rowdict in nodes_rd:
+            rowdict = dict_convert(rowdict)
             name = rowdict['name']
             self.topo.add_node(name)
             self.nodeobjs[name] = SimSwitch(**rowdict)
 
-        for myRow in links_df.iterrows():
-            rowdict = dict(myRow[1])
+        for rowdict in links_rd:
+            rowdict = dict_convert(rowdict)
             node1, node2 = rowdict['node1'], rowdict['node2']
             self.topo.add_edge(node1, node2)
             self.linkobjs[(node2, node1)] = SimLink(**rowdict)
@@ -390,7 +400,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         self.calc_flow_rates(self.sim_time)
         self.exec_ed_time = time()
 
-        # Step 4: Dump list of records to pd.DataFrame, then to csv files
+        # Step 4: Dump list of records to csv files
         if (cfg.LOG_LINK_UTIL > 0):
             self.dump_link_util()
 

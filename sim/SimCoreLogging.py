@@ -18,13 +18,7 @@ import netaddr as na
 import pandas as pd
 import numpy as np
 # User-defined modules
-from SimConfig import *
-from SimCtrl import *
-from SimFlowGen import *
-from SimFlow import *
-from SimSwitch import *
-from SimLink import *
-from SimEvent import *
+import SimConfig as cfg
 
 
 class SimCoreLogging:
@@ -289,7 +283,7 @@ class SimCoreLogging:
     def dump_config(self):
         """
         """
-        os.system("cp %s %s" %(fn_config, self.fn_config))
+        os.system("cp ./sim/SimConfig.py %s" %(self.fn_config))
 
 
     def show_summary(self):

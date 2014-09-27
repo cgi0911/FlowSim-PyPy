@@ -12,10 +12,20 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # Built-in modules
 import os
+import sys
+
+# ---- Copy config file to sim/SimConfig.py as specified ----
+if (len(sys.argv) > 1):
+    os.system("cp %s ./sim/SimConfig.py" %(sys.argv[1]))
+    print "Reading config from: %s" %(sys.argv[1])
+else:
+    os.system("cp ./cfgs/default.txt ./sim/SimConfig.py")
+    print "Reading config from: ./cfgs/default.txt"
+
 # Third-party modules
 # User-defined modules
 from sim.SimCore import *
-from sim.SimConfig import *
+import sim.SimConfig as cfg
 
 if __name__ == '__main__':
     mySim = SimCore()

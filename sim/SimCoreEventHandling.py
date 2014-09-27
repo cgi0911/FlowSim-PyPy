@@ -7,23 +7,11 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # Built-in modules
-import os
-import csv
 from heapq import heappush, heappop
-from math import ceil, log
-from time import time
 # Third-party modules
-import networkx as nx
-import netaddr as na
-import pandas as pd
-import numpy as np
 # User-defined modules
-from SimConfig import *
-from SimCtrl import *
-from SimFlowGen import *
+import SimConfig as cfg
 from SimFlow import *
-from SimSwitch import *
-from SimLink import *
 from SimEvent import *
 
 

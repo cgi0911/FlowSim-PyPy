@@ -9,10 +9,9 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 from heapq import heappush, heappop
 import random as rd
 # Third-party modules
-import numpy as np
 import netaddr as na
 # User-defined modules
-from SimConfig import *
+import SimConfig as cfg
 from SimEvent import *
 
 
@@ -81,18 +80,18 @@ class SimFlowGen:
 
         """
         fsize = frate = 0.0
-        roll_dice = np.random.uniform(0, 1)     # Decide large or small flow
+        roll_dice = rd.uniform(0, 1)     # Decide large or small flow
 
         if(roll_dice < cfg.FLOWGEN_SIZERATE_BIMODAL.PROB_LARGE_FLOW):
-            fsize = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_LO,   \
-                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_HI, )
-            frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_LO,   \
-                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_HI, )
+            fsize = rd.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_LO,   \
+                               cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_HI, )
+            frate = rd.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_LO,   \
+                               cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_HI, )
         else:
-            fsize = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_LO,   \
-                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_HI, )
-            frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_LO,   \
-                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_HI, )
+            fsize = rd.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_LO,   \
+                               cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_HI, )
+            frate = rd.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_LO,   \
+                               cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_HI, )
         fsize = round(fsize, 0)
         return fsize, frate
 
@@ -107,10 +106,10 @@ class SimFlowGen:
             float64: Uniform random flow size, round to integral digit.
 
         """
-        fsize = round(np.random.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_LO, \
-                                        cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_HI), 0)
-        frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_LO, \
-                                  cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_HI)
+        fsize = round(rd.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_LO, \
+                                 cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_HI), 0)
+        frate = rd.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_LO, \
+                           cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_HI)
         return fsize, frate
 
 
@@ -161,7 +160,7 @@ class SimFlowGen:
         """
         hi = (1+cfg.FLOWGEN_ARR_CONST.CUTOFF) * 1.0/cfg.FLOWGEN_ARR_CONST.FLOW_ARR_RATE
         lo = (1-cfg.FLOWGEN_ARR_CONST.CUTOFF) * 1.0/cfg.FLOWGEN_ARR_CONST.FLOW_ARR_RATE
-        new_intarr_time = np.random.uniform(lo, hi)
+        new_intarr_time = rd.uniform(lo, hi)
         new_ev_time = ev_time + new_intarr_time
 
         if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
@@ -176,7 +175,7 @@ class SimFlowGen:
     def gen_new_flow_arr_exp(self, ev_time, sim_core):
         """
         """
-        new_intarr_time = np.random.exponential(scale=1.0/cfg.FLOWGEN_ARR_EXP.FLOW_ARR_RATE)
+        new_intarr_time = rd.expovariate(lambd=cfg.FLOWGEN_ARR_EXP.FLOW_ARR_RATE)
         new_ev_time = ev_time + new_intarr_time
 
         if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
@@ -201,7 +200,7 @@ class SimFlowGen:
             # For each host, generate one flow with the host as its src host.
             # New flows will be generated upon EvFlowEnd
             for src_host in self.hosts:
-                ev_time = np.random.uniform(0.0, cfg.FLOWGEN_ARR_SATURATE.INIT_FLOWS_SPREAD)
+                ev_time = rd.uniform(0.0, cfg.FLOWGEN_ARR_SATURATE.INIT_FLOWS_SPREAD)
                 event   = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
                 heappush(ev_queue, (ev_time, event))
         elif (cfg.FLOWGEN_ARR_MODEL == 'const' or cfg.FLOWGEN_ARR_MODEL == 'exp'):

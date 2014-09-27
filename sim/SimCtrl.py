@@ -9,13 +9,10 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 from time import *
 import random as rd
-import copy as cp
 # Third-party modules
 import networkx as nx
-import pprint as pp
-import numpy as np
 # User-defined modules
-from SimConfig import *
+import SimConfig as cfg
 
 
 class SimCtrl:
@@ -367,9 +364,6 @@ class SimCtrl:
             return feasible_paths[0]
 
         # Find the best table LB path
-        #array_table_size = np.array([self.get_node_attr(nd, 'table_size') \
-        #                            for nd in self.nodes])
-
         best_objval     = float('inf')  # Just a large float number
         best_path       = []
 
@@ -379,17 +373,7 @@ class SimCtrl:
                 usage   =   self.get_table_usage(nd)
                 size    =   self.get_node_attr(nd, 'table_size')
                 objval  +=  float(size) / (size - usage)
-            #list_usage = []
-            # Construct a table usage list assume taking this path
-            # for nd in self.nodes:
-            #     if (nd in path):
-            #         list_usage.append(self.get_table_usage(nd) + 1)
-            #     else:
-            #         list_usage.append(self.get_table_usage(nd))
-            # list_util = np.array(list_usage) / array_table_size
-            #curr_stdev = np.std(list_util)
-            #if (curr_stdev < best_stdev):
-            #    best_path = path
+
             if (objval < best_objval):
                 best_path = path
 
