@@ -253,7 +253,7 @@ class SimCoreLogging:
         avg_rec = {}
         for col in self.col_avg_flow_stats:
             avg_rec[col] = np.average(df_flow_stats[col])
-        
+
         finished_durations = [x for x in df_flow_stats['duration'] if x > 0]
         avg_rec['duration'] = np.average(finished_durations)
 

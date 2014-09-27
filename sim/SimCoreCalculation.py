@@ -9,6 +9,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 import os
 import csv
+import bisect as bs
 from heapq import heappush, heappop
 from math import ceil, log
 from time import time
@@ -29,6 +30,45 @@ from SimEvent import *
 class SimCoreCalculation:
     """Flow rate calculation-related codes for SimCore class.
     """
+    def __init__(self):
+        """
+        """
+        self.sorted_flows = []
+            # A sorted list of flows (in ascending order of flow_rate)
+            # Each element is a 3-tuple: (flow_rate, flowobj, flow_key)
+
+
+    def sorted_flows_insert(self, flow_rate, flowobj, flow_key):
+        """
+        """
+        # Manually implement binary search. Although bisect library helps but it requires a
+        # separated sorted_keys list, which is not what I wanted.
+        lo  = 0
+        hi  = len(self.sorted_flows)
+        mid = 0
+        while (lo < hi):    # O(log n)
+            mid = (lo + hi) / 2     # Integer
+            mid_rate = self.sorted_flows[mid][0]     # First element of the 3-tuple
+            if (mid_rate < flow_rate):
+                lo = mid + 1
+            elif (mid_rate > flow_rate):
+                hi = mid
+            else:
+                break
+
+        self.sorted_flows.insert(mid, (flow_rate, flowobj, flow_key) )  # O(n)
+
+
+    def sorted_flows_remove(self, flow_key):
+        """
+        """
+        for i in range(len(self.sorted_flows)):
+            # Since flow_rate may not be unique, I still implemented a linear search.
+            # It's done only once per EvFlowEnd so doesn't matter much.
+            if (self.sorted_flows[i][2] == flow_key):
+                self.sorted_flows.pop(i)
+                return
+
 
     def calc_flow_rates_src_limited(self, ev_time):
         """Calculate flow rates (according to DevoFlow Algorithm 1), but is aware of
@@ -42,29 +82,35 @@ class SimCoreCalculation:
             flow and its estimated end time.
 
         """
-        heap_flows = []             # Keep a minheap for all flows, indexed by their
-                                    # flowobj.flow_rate (max source rate of flow)
+        #heap_flows = []             # Keep a minheap for all flows, indexed by their
+        #                            # flowobj.flow_rate (max source rate of flow)
+
         btnk_link = ('', '')        # Bottleneck link: defined by -
                                     #   argmin_{all links}
                                     #   {linkobj.unasgn_bw / linkobj.n_unasgn_flows}
         btnk_bw = float('inf')      # As shown above, bottleneck BW defined by -
                                     #   linkobj.unasgn_bw / linkobj.n_unasgn_flows
         n_unprocessed_links = len(self.links)
+        n_unasgn_flows      = len(self.sorted_flows)
         earliest_end_time   = float('inf')
         earliest_end_flow   = ('', '')
 
+        for fl_tuple in self.sorted_flows:
+            fl_tuple[1].assigned = False
+
         # Initialize flow variables and push to min-heap indexed by flow_rate
-        for fl in self.flows:
-            flowobj = self.flows[fl]
-            if (not flowobj.status == 'active'):
-                continue
-            else:
-                flowobj.assigned = False
-                heappush(heap_flows, (flowobj.flow_rate, flowobj, fl))
+        # for fl in self.flows:
+        #     flowobj = self.flows[fl]
+        #     if (not flowobj.status == 'active'):
+        #         continue
+        #     else:
+        #         flowobj.assigned = False
+        #         #heappush(heap_flows, (flowobj.flow_rate, flowobj, fl))
+        #         x += 1
 
         # Initialize link variables and find first-round bottleneck link
         for lk in self.links:
-            linkobj = self.linkobjs[lk]
+            linkobj                 = self.linkobjs[lk]
             linkobj.unasgn_bw       = linkobj.cap
             linkobj.n_active_flows  = linkobj.get_n_active_flows()
             linkobj.n_unasgn_flows  = linkobj.n_active_flows
@@ -77,23 +123,29 @@ class SimCoreCalculation:
             else:
                 n_unprocessed_links -= 1
 
-        while True:
-            if (n_unprocessed_links == 0 or len(heap_flows) == 0):
+        s_ptr = 0
+        while (s_ptr < len(self.sorted_flows)):
+            if (n_unprocessed_links == 0 or n_unasgn_flows == 0):
                 break
 
-            if (heap_flows[0][1].assigned == True):
-                heappop(heap_flows)
+            #if (heap_flows[0][1].assigned == True):
+            #    heappop(heap_flows)
+            #    continue
+            if (self.sorted_flows[s_ptr][1].assigned == True):
+                s_ptr += 1
                 continue
 
             # Get the flow BW, flowobj and flow key at root of minheap
-            mice_bw, mice_flowobj, mice_flowkey = heap_flows[0]
+            #mice_bw, mice_flowobj, mice_flowkey = heap_flows[0]
+            mice_bw, mice_flowobj, mice_flowkey = self.sorted_flows[s_ptr]
 
             recalc_btnk = False     # Flag for recalculation of global bottlneck
 
             # Case 1: BW assigned to flow(s) limited by the mice flow's own flow_rate
             if (mice_bw < btnk_bw):
                 #print "process flow"
-                heappop(heap_flows)
+                #heappop(heap_flows)
+                s_ptr += 1
 
                 # Update this flow
                 est_end_time, bytes_sent_since_update = \
@@ -120,6 +172,8 @@ class SimCoreCalculation:
                         if (lk == btnk_link):
                             recalc_btnk = True
                         n_unprocessed_links -= 1
+
+                n_unasgn_flows -= 1
 
             # Case 2: BW assigned to flows(s) limited by max-min fair on btnk_link
             else:
@@ -159,6 +213,8 @@ class SimCoreCalculation:
                                 if (lk == btnk_link):
                                     recalc_btnk = True
                                 n_unprocessed_links -=  1
+
+                    n_unasgn_flows -= 1
 
             #if (n_unprocessed_links == 0 or len(heap_flows) == 0):
             #    break

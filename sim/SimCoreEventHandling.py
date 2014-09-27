@@ -147,15 +147,16 @@ class SimCoreEventHandling:
             self.ctrl.install_entry(event.path, event.src_ip, event.dst_ip)
             # Update flow instance
             fl = (event.src_ip, event.dst_ip)
-            self.flows[fl].status       = 'active'
-            self.flows[fl].path         = event.path
-
-            self.flows[fl].links        = list_links
+            flowobj             = self.flows[fl]
+            flowobj.status      = 'active'
+            flowobj.path        = event.path
+            flowobj.links       = list_links
             for lk in list_links:
                 self.linkobjs[lk].n_active_flows += 1
             self.n_active_flows += 1
-            self.flows[fl].install_time = event.ev_time
+            flowobj.install_time = event.ev_time
             # Recalculate flow rates
+            self.sorted_flows_insert(flowobj.flow_rate, flowobj, fl)
             self.calc_flow_rates(ev_time)
 
         else:
@@ -208,6 +209,7 @@ class SimCoreEventHandling:
         self.n_active_flows -= 1
 
         # Calculate the flow rates
+        self.sorted_flows_remove(fl)
         self.calc_flow_rates(ev_time)
 
         # Schedule an EvIdleTimeout event

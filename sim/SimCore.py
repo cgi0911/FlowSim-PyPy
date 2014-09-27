@@ -102,6 +102,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
 
         # ---- Constructor of base classes ----
         SimCoreLogging.__init__(self)
+        SimCoreCalculation.__init__(self)
 
 
     def display_topo(self):
