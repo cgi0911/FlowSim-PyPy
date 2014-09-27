@@ -1,3 +1,4 @@
-./logs/
-./nohups/
-./temp/
+./logs/*
+./nohups/*
+./temp/*
+./sim/*.pyc
