@@ -13,11 +13,11 @@ import os
 EXP_NAME    = 'quick'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 15.0
+SIM_TIME    = 60.0
 
 DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'ecmp'           # Supported routing modes:
+ROUTING_MODE = 'spf'           # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
@@ -25,7 +25,7 @@ ROUTING_MODE = 'ecmp'           # Supported routing modes:
 K_PATH = 2                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-DO_PROFILING = False             # Do code profiling for this experiment
+DO_PROFILING = True             # Do code profiling for this experiment
 
 # ---------------------------------------
 # Switch/link Initialization Parameters
@@ -35,7 +35,7 @@ TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
-CAP_PER_LINK = 10.0
+CAP_PER_LINK = 20.0
 CAP_UNIT     = 1.0e9    # Gbps
 
 
@@ -90,7 +90,7 @@ FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
 
-FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
+FLOWGEN_ARR_MODEL           = 'saturate'    # Flow arrival model
                                         # "saturate": Each host will be the source of
                                         #   one and exactly one active flow. A new flow is
                                         #   fired after the previous one comes to an end.
@@ -121,13 +121,13 @@ class FLOWGEN_SIZERATE_BIMODAL:
 
 class FLOWGEN_ARR_SATURATE:
     INIT_FLOWS_SPREAD = 1.0
-    NEXT_FLOW_DELAY = 0.1
+    NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 100.0       # flows/sec
+    FLOW_ARR_RATE = 250.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
 
 class FLOWGEN_ARR_EXP:
-    FLOW_ARR_RATE = 100.0       # flows/sec, a.k.a. lambda
+    FLOW_ARR_RATE = 250.0       # flows/sec, a.k.a. lambda
