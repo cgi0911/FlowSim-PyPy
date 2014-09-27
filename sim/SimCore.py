@@ -403,6 +403,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         # Step 4: Dump list of records to csv files
         if (cfg.LOG_LINK_UTIL > 0):
             self.dump_link_util()
+            self.dump_link_flows()
 
         if (cfg.LOG_TABLE_UTIL > 0):
             self.dump_table_util()
