@@ -2,9 +2,9 @@ ROUTING_MODE,tablelb
     K_PATH,2
     K_PATH_METHOD,yen
 DO_REROUTE,0
-n_EvFlowArrival,29993
-n_EvPacketIn,30151
-n_Reject,163
-n_EvFlowEnd,29866
-n_EvIdleTimeout,29352
-exec_time,69.409520
+n_EvFlowArrival,29998
+n_EvPacketIn,30186
+n_Reject,190
+n_EvFlowEnd,29870
+n_EvIdleTimeout,29376
+exec_time,71.138498
