@@ -30,11 +30,9 @@ import sim.SimConfig as cfg
 if __name__ == '__main__':
     mySim = SimCore()
     if (cfg.DO_PROFILING == True):
+        fn_profile = os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats')
         import cProfile
-        import pstats
-        cProfile.run('mySim.main_course()', \
-                     os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats'))
-        pst = pstats.Stats(os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats'))
-        os.system("python -m pstats %s" %(os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats')))
+        print "Code performance profiling output to", fn_profile
+        cProfile.run('mySim.main_course()', fn_profile)
     else:
         mySim.main_course()

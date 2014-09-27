@@ -9,14 +9,10 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 import os
 import csv
-from heapq import heappush, heappop
-from math import ceil, log
-from time import time
+from math import ceil
 # Third-party modules
-import networkx as nx
-import netaddr as na
-import pandas as pd
 import numpy as np
+import pprint as pp
 # User-defined modules
 import SimConfig as cfg
 
@@ -70,6 +66,12 @@ class SimCoreLogging:
                                     [str(nd) for nd in self.nodes]
         self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute']
 
+        # Record column vectors
+        self.col_vec_link_util  = {k: [] for k in self.col_link_util}
+        self.col_vec_link_flows = {k: [] for k in self.col_link_flows}
+        self.col_vec_table_util = {k: [] for k in self.col_table_util}
+        self.col_vec_flow_stats = {k: [] for k in self.col_flow_stats}
+
         # Byte counters for each link
         self.link_byte_cnt = {}
         for lk in self.links:
@@ -85,43 +87,47 @@ class SimCoreLogging:
         self.n_active_flows = 0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
+        # Register CSV dialect
+        csv.register_dialect('flowsim', delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
+
 
     def log_link_util(self, ev_time):
         """
         """
-        ret_util    = {'time': np.round(ev_time, 3)}
-        ret_flows   = {'time': np.round(ev_time, 3)}
+        ret_util    = {'time': round(ev_time, 3)}
+        ret_flows   = {'time': round(ev_time, 3)}
         list_usage  = []
         list_util   = []
         list_flows  = []
 
-        # Iterate over all flows
+        # Iterate over all flows, update these flows
         for fl in self.flows:
             if (not self.flows[fl].status == 'active'):
                 continue
 
-            #links_on_path = self.get_links_on_path(self.flows[fl].path)
+            flowobj = self.flows[fl]
             links_on_path = self.flows[fl].links
-            bytes_sent = self.flows[fl].curr_rate * \
-                         (ev_time - self.flows[fl].update_time)
+            bytes_sent = self.flows[fl].curr_rate * (ev_time - self.flows[fl].update_time)
 
             for lk in links_on_path:
                 self.link_byte_cnt[lk] += bytes_sent
 
-            self.flows[fl].bytes_sent += bytes_sent
-            self.flows[fl].bytes_left -= bytes_sent
-            self.flows[fl].update_time = ev_time
+            flowobj.bytes_sent += bytes_sent
+            flowobj.bytes_left -= bytes_sent
+            flowobj.update_time = ev_time
 
+        # Get link_util and link_flows info
         for lk in self.link_byte_cnt:
             ret_util[str(lk)]   =   self.link_byte_cnt[lk] / \
                                     (self.linkobjs[lk].cap * cfg.PERIOD_LOGGING)
             ret_flows[str(lk)]  =   self.linkobjs[lk].get_n_active_flows()
 
+        # Make lists for averages
         list_usage  = [self.link_byte_cnt[lk] for lk in self.link_byte_cnt]
         list_util   = [ret_util[str(lk)] for lk in self.link_byte_cnt ]
         list_flows  = [ret_flows[str(lk)] for lk in self.link_byte_cnt]
 
-        # Calculate statistics
+        # Calculate statistics for link_util
         ret_util['mean']        = np.mean(list_util)
         ret_util['stdev']       = np.std(list_util)
         ret_util['min']         = np.min(list_util)
@@ -130,6 +136,7 @@ class SimCoreLogging:
         ret_util['q3']          = np.percentile(list_util, 75)
         ret_util['median']      = np.percentile(list_util, 50)
         ret_util['throughput']  = np.sum(list_usage) / cfg.PERIOD_LOGGING
+        # Calculate statistics for link_flows
         ret_flows['mean']       = np.mean(list_flows)
         ret_flows['stdev']      = np.std(list_flows)
         ret_flows['min']        = np.min(list_flows)
@@ -137,6 +144,10 @@ class SimCoreLogging:
         ret_flows['q1']         = np.percentile(list_flows, 25)
         ret_flows['q3']         = np.percentile(list_flows, 75)
         ret_flows['median']     = np.percentile(list_flows, 50)
+
+        # Append to column vectors
+        for k in ret_util:  self.col_vec_link_util[k].append(ret_util[k])
+        for k in ret_flows: self.col_vec_link_flows[k].append(ret_flows[k])
 
         # Reset byte counters
         for lk in self.link_byte_cnt:
@@ -163,13 +174,16 @@ class SimCoreLogging:
             list_util.append(nd_util)
 
         # Calculate statistics
-        ret['mean'] = np.mean(list_util)
-        ret['stdev'] = np.std(list_util)
-        ret['min'] = np.mean(list_util)
-        ret['max'] = np.max(list_util)
-        ret['q1'] = np.percentile(list_util, 25)
-        ret['q3'] = np.percentile(list_util, 75)
-        ret['median'] = np.percentile(list_util, 50)
+        ret['mean']     = np.mean(list_util)
+        ret['stdev']    = np.std(list_util)
+        ret['min']      = np.mean(list_util)
+        ret['max']      = np.max(list_util)
+        ret['q1']       = np.percentile(list_util, 25)
+        ret['q3']       = np.percentile(list_util, 75)
+        ret['median']   = np.percentile(list_util, 50)
+
+        # Append to column vectors
+        for k in ret:   self.col_vec_table_util[k].append(ret[k])
 
         return ret
 
@@ -182,82 +196,104 @@ class SimCoreLogging:
         for fld in self.col_flow_stats:
             ret[fld] = getattr(flow_item, fld)
 
+        # Append to column vectors
+        for k in ret:   self.col_vec_flow_stats[k].append(ret[k])
+
         return ret
 
 
     def dump_link_util(self):
         """
         """
-        # Prepare a data frame from records
-        df_link_util    = pd.DataFrame.from_records(self.link_util_recs, \
-                                                    columns=self.col_link_util)
-        df_link_flows   = pd.DataFrame.from_records(self.link_flows_recs, \
-                                                    columns=self.col_link_flows)
+        recs        = self.link_util_recs
+        col_vecs    = self.col_vec_link_util
+        wt          = csv.DictWriter(open(self.fn_link_util, 'wb'), \
+                                     fieldnames=self.col_link_util, \
+                                     dialect='flowsim')
 
         # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_link_util:
-            avg_rec[col] = np.average(df_link_util[col][cfg.AVG_IGNORE_RECORDS+1:])
-        df_link_util = df_link_util.append([{}, avg_rec], ignore_index=True)
-                                            # Append an empty line, then avg record
+            pos             = int(len(col_vecs[col]) * cfg.IGNORE_HEAD)
+            temp            = col_vecs[col][pos:]
+            avg_rec[col]    = float(sum(temp))/len(temp)
+        avg_rec['time'] = 'average'
 
+        # Write records to CSV writer line by line
+        wt.writeheader()
+        wt.writerows(recs)
+        wt.writerow({})
+        wt.writerow(avg_rec)
+
+
+    def dump_link_flows(self):
+        """
+        """
+        recs        = self.link_flows_recs
+        col_vecs    = self.col_vec_link_flows
+        wt          = csv.DictWriter(open(self.fn_link_flows, 'wb'), \
+                                     fieldnames=self.col_link_flows, \
+                                     dialect='flowsim')
+
+        # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_link_flows:
-            avg_rec[col] = np.average(df_link_flows[col][cfg.AVG_IGNORE_RECORDS+1:])
-        df_link_flows = df_link_flows.append([{}, avg_rec], ignore_index=True)
-                                            # Append an empty line, then avg record
+            pos             = int(len(col_vecs[col]) * cfg.IGNORE_HEAD)
+            temp            = col_vecs[col][pos:]
+            avg_rec[col]    = float(sum(temp))/len(temp)
+        avg_rec['time'] = 'average'
 
-        # Dump data frame to csv file
-        df_link_util = df_link_util.to_csv(self.fn_link_util, index=False, \
-                            quoting=csv.QUOTE_NONNUMERIC)
-        df_link_flows = df_link_flows.to_csv(self.fn_link_flows, index=False, \
-                            quoting=csv.QUOTE_NONNUMERIC)
-
+        # Write records to CSV writer line by line
+        wt.writeheader()
+        wt.writerows(recs)
+        wt.writerow({})
+        wt.writerow(avg_rec)
 
     def dump_table_util(self):
         """
         """
-        # Prepare a data frame from records
-        df_table_util   = pd.DataFrame.from_records(self.table_util_recs, \
-                                                    columns=self.col_table_util)
+        recs        = self.table_util_recs
+        col_vecs    = self.col_vec_table_util
+        wt          = csv.DictWriter(open(self.fn_table_util, 'wb'), \
+                                     fieldnames=self.col_table_util, \
+                                     dialect='flowsim')
 
         # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_table_util:
-            avg_rec[col] = np.average(df_table_util[col][cfg.AVG_IGNORE_RECORDS+1:])
-        df_table_util = df_table_util.append([{}, avg_rec], ignore_index=True)
-                                            # Append an empty line, then avg record
+            pos             = int(len(col_vecs[col]) * cfg.IGNORE_HEAD)
+            temp            = col_vecs[col][pos:]
+            avg_rec[col]    = float(sum(temp))/len(temp)
+        avg_rec['time'] = 'average'
 
-        df_table_util.to_csv(self.fn_table_util, index=False, \
-                             quoting=csv.QUOTE_NONNUMERIC)
+        # Write records to CSV writer line by line
+        wt.writeheader()
+        wt.writerows(recs)
+        wt.writerow({})
+        wt.writerow(avg_rec)
 
 
     def dump_flow_stats(self):
         """
         """
-        # First, create records for all flows not yet removed from self.flows
-        for fl in self.flows:
-            self.flow_stats_recs.append(self.log_flow_stats(self.flows[fl]))
-
-        df_flow_stats   = pd.DataFrame.from_records(self.flow_stats_recs, \
-                                                    columns=self.col_flow_stats)
-        df_flow_stats   = df_flow_stats.sort(['arrive_time'], ascending=True)
+        recs        = self.flow_stats_recs
+        col_vecs    = self.col_vec_flow_stats
+        wt          = csv.DictWriter(open(self.fn_flow_stats, 'wb'), \
+                                     fieldnames=self.col_flow_stats, \
+                                     dialect='flowsim')
 
         # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_flow_stats:
-            avg_rec[col] = np.average(df_flow_stats[col])
+            temp            = col_vecs[col]
+            avg_rec[col]    = float(sum(temp))/len(temp)
+        avg_rec['src_ip'] = 'average'
 
-        finished_durations = [x for x in df_flow_stats['duration'] if x > 0]
-        avg_rec['duration'] = np.average(finished_durations)
-
-        df_flow_stats = df_flow_stats.append([{}, avg_rec], ignore_index=True)
-                                            # Append an empty line, then avg record
-
-
-
-        df_flow_stats.to_csv(self.fn_flow_stats, index=False, \
-                             quoting=csv.QUOTE_NONNUMERIC)
+        # Write records to CSV writer line by line
+        wt.writeheader()
+        wt.writerows(recs)
+        wt.writerow({})
+        wt.writerow(avg_rec)
 
 
     def dump_summary(self):

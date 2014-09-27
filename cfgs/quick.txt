@@ -25,7 +25,7 @@ ROUTING_MODE = 'ecmp'           # Supported routing modes:
 K_PATH = 2                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-DO_PROFILING = False             # Do code profiling for this experiment
+DO_PROFILING = True             # Do code profiling for this experiment
 
 # ---------------------------------------
 # Switch/link Initialization Parameters
@@ -60,7 +60,7 @@ LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL = 1
 LOG_FLOW_STATS = 1
 LOG_SUMMARY = 1
-AVG_IGNORE_RECORDS = 100        # Ignore first ? columns when doing average
+IGNORE_HEAD = 0.3               # Ignore head (portion) rows when doing average
 
 
 

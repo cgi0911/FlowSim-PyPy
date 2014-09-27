@@ -341,7 +341,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
                                      "#Rejects:%-6d\r"                  %(self.n_Reject)
                                     )
                     sys.stdout.flush()
-                    next_prog_time = np.ceil(percentage) * cfg.SIM_TIME / 100.0
+                    next_prog_time = ceil(percentage) * cfg.SIM_TIME / 100.0
 
             if (self.ev_queue[0][0] < self.next_end_time):
                 # Next event comes earlier than next flow end
@@ -418,8 +418,4 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
 
         if (cfg.SHOW_SUMMARY > 0):
             self.show_summary()
-
-
-
-
 
