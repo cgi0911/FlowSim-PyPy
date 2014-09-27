@@ -9,7 +9,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 # Third-party modules
 # User-defined modules
-from config import *
+from SimConfig import *
 
 
 class SimLink:
@@ -28,9 +28,16 @@ class SimLink:
         """
         self.node1 = kwargs.get('node1', 'noname')
         self.node2 = kwargs.get('node2', 'noname')
-        self.cap = kwargs.get('cap', 1e9) if (not cfg.OVERRIDE_CAP)     \
-                   else cfg.CAP_PER_LINK
+        self.cap = kwargs.get('cap', 1e9) * cfg.CAP_UNIT if (not cfg.OVERRIDE_CAP)     \
+                   else cfg.CAP_PER_LINK * cfg.CAP_UNIT
         self.flows = {}
+
+        # These variables are used in calc_flow_rates
+        self.unasgn_b       = self.cap
+        self.n_active_flows = 0
+        self.n_unsagn_flows = 0
+        self.bw_per_flow    = 0.0
+        self.processed      = False
 
 
     def __str__(self):
@@ -39,8 +46,7 @@ class SimLink:
         ret =   'Link (%s, %s):\n'                    %(self.node1, self.node2) +     \
                 '\tcap: %.6e\n'                       %(self.cap) +   \
                 '\t# of registered flows:%d\n'        %(len(self.flows)) +  \
-                '\t# of active flows:%d\n'            %(len([fl for fl in self.flows \
-                                                           if self.flows[fl].status=='active']))+  \
+                '\t# of active flows:%d\n'            %(self.n_active_flows)+  \
                 '\t# of idling flows:%d\n'            %(len([fl for fl in self.flows \
                                                            if self.flows[fl].status=='idle']))
         return ret
@@ -64,9 +70,10 @@ class SimLink:
         """
         ret = 0
 
-        for fl in self.flows:
-            if (self.flows[fl].status == 'active'):
-                ret += 1
+        #for fl in self.flows:
+        #    if (self.flows[fl].status == 'active'):
+        #        ret += 1
+        ret = self.n_active_flows
 
         return ret
 

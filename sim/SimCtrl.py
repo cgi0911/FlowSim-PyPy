@@ -15,7 +15,7 @@ import networkx as nx
 import pprint as pp
 import numpy as np
 # User-defined modules
-from config import *
+from SimConfig import *
 
 
 class SimCtrl:
@@ -367,23 +367,30 @@ class SimCtrl:
             return feasible_paths[0]
 
         # Find the best table LB path
-        array_table_size = np.array([self.get_node_attr(nd, 'table_size') \
-                                    for nd in self.nodes])
+        #array_table_size = np.array([self.get_node_attr(nd, 'table_size') \
+        #                            for nd in self.nodes])
 
-        best_stdev = 999999.9   # Just a large float number
-        best_path = []
+        best_objval     = float('inf')  # Just a large float number
+        best_path       = []
 
         for path in feasible_paths:
-            list_usage = []
+            objval = 0.0
+            for nd in path:
+                usage   =   self.get_table_usage(nd)
+                size    =   self.get_node_attr(nd, 'table_size')
+                objval  +=  float(size) / (size - usage)
+            #list_usage = []
             # Construct a table usage list assume taking this path
-            for nd in self.nodes:
-                if (nd in path):
-                    list_usage.append(self.get_table_usage(nd) + 1)
-                else:
-                    list_usage.append(self.get_table_usage(nd))
-            list_util = np.array(list_usage) / array_table_size
-            curr_stdev = np.std(list_util)
-            if (curr_stdev < best_stdev):
+            # for nd in self.nodes:
+            #     if (nd in path):
+            #         list_usage.append(self.get_table_usage(nd) + 1)
+            #     else:
+            #         list_usage.append(self.get_table_usage(nd))
+            # list_util = np.array(list_usage) / array_table_size
+            #curr_stdev = np.std(list_util)
+            #if (curr_stdev < best_stdev):
+            #    best_path = path
+            if (objval < best_objval):
                 best_path = path
 
         return best_path    # Will return [] is no path available

@@ -1,0 +1,20 @@
+SimCore: Loading built-in modules.
+SimCore: Loading third-party modules.
+SimCore: Loading user-defined modules.
+Reading config from: ./cfgs/fe3.txt
+Config module loaded as: <module 'cfg' from './temp/fe3.txt'>
+Building path database for all src-dst node pairs.
+Finished building path database
+Logging to folder: ./logs/fe3
+Start simulation. Experiment name: fe3
+
+----------------------------------------
+Summary:
+----------------------------------------
+n_EvFlowArrival = 5995
+n_EvPacketIn = 5994
+n_Reject = 0
+n_EvFlowEnd = 5664
+n_EvIdleTimeout = 5567
+exec_time = 72.219925
+

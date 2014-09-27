@@ -49,6 +49,7 @@ class SimFlow:
                     src_node='',
                     dst_node='',
                     path=[],
+                    links=[],
                     flow_size=0.0,
                     flow_rate=0.0,
                     curr_rate=0.0,
@@ -61,15 +62,21 @@ class SimFlow:
                     end_time = -1.0,
                     remove_time = -1.0,
                     update_time = -1.0,
-                    duration = 0.0,
+                    duration = -1.0,
                     resend = 0,
                     reroute = 0
                 ):
+        """
+
+        Extra Notes:
+            For any time-related attributes, -1.0 means not decided.
+        """
         self.src_ip         = src_ip
         self.dst_ip         = dst_ip
         self.src_node       = src_node
         self.dst_node       = dst_node
         self.path           = path
+        self.links          = links
         self.flow_size      = flow_size
         self.flow_rate      = flow_rate
         self.curr_rate      = curr_rate
@@ -85,6 +92,9 @@ class SimFlow:
         self.duration       = duration
         self.resend         = resend
         self.reroute        = reroute
+
+        # These variables are used in calc_flow_rates
+        self.assigned       = False
 
     def __str__(self):
         # Header is tuple of (src_ip, dst_ip); attribute name and value shown line by line
@@ -111,3 +121,22 @@ class SimFlow:
         return ret
 
 
+    def update_flow(self, ev_time, asgn_bw):
+        """
+        """
+        # Calculate past behavior from update_time to now
+        bytes_sent_since_update =   self.curr_rate *                 \
+                                    (ev_time - self.update_time)
+        self.bytes_left         -=  bytes_sent_since_update
+        self.bytes_sent         =   self.flow_size - self.bytes_left
+        self.update_time        =   ev_time
+        self.avg_rate           =   self.bytes_sent /                \
+                                (ev_time - self.arrive_time)
+        # Update curr_rate & assigned flag
+        self.curr_rate          =   asgn_bw
+        self.assigned           =   True
+        # Estimate this flow's end time
+        est_end_time            =   ev_time + \
+                                    (self.bytes_left / self.curr_rate)
+
+        return est_end_time, bytes_sent_since_update

@@ -12,7 +12,7 @@ import random as rd
 import numpy as np
 import netaddr as na
 # User-defined modules
-from config import *
+from SimConfig import *
 from SimEvent import *
 
 
@@ -41,13 +41,12 @@ class SimFlowGen:
 
         """
         while True:
-            if (cfg.FLOW_DST_MODEL == 'uniform'):
+            if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
                 dst_ip = self.pick_dst_uniform(src_ip)
             else:
-                # Default to 'uniform'
-                dst_ip = self.pick_dst_uniform(src_ip)
+                dst_ip = self.pick_dst_uniform(src_ip)  # Default to 'uniform'
             if (not (src_ip, dst_ip) in sim_core.flows):
-                break
+                break   # Make sure src and dst host are not an existing flow
 
         return dst_ip
 
@@ -66,11 +65,56 @@ class SimFlowGen:
         while True:
             dst_ip = rd.choice(self.hosts.keys())
             if (not self.hosts[dst_ip] == self.hosts[src_ip]):
-                break
+                break   # Make sure src and dst host are not within the same LAN
         return dst_ip
 
 
-    def get_flow_size(self):
+    def gen_flow_size_rate_bimodal(self):
+        """Generate flow size according to bimodal random model
+
+        Args:
+            None. All parameters are from cfg.
+
+        Return:
+            float64: Bimodal flow size, round to integral digit.
+            float64: Bimodal flow rate.
+
+        """
+        fsize = frate = 0.0
+        roll_dice = np.random.uniform(0, 1)     # Decide large or small flow
+
+        if(roll_dice < cfg.FLOWGEN_SIZERATE_BIMODAL.PROB_LARGE_FLOW):
+            fsize = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_LO,   \
+                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_LARGE_HI, )
+            frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_LO,   \
+                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_LARGE_HI, )
+        else:
+            fsize = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_LO,   \
+                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_SIZE_SMALL_HI, )
+            frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_LO,   \
+                                      cfg.FLOWGEN_SIZERATE_BIMODAL.FLOW_RATE_SMALL_HI, )
+        fsize = round(fsize, 0)
+        return fsize, frate
+
+
+    def gen_flow_size_rate_uniform(self):
+        """Generate flow size according to uniform random model
+
+        Args:
+            None. All parameters are from cfg.
+
+        Return:
+            float64: Uniform random flow size, round to integral digit.
+
+        """
+        fsize = round(np.random.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_LO, \
+                                        cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_SIZE_HI), 0)
+        frate = np.random.uniform(cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_LO, \
+                                  cfg.FLOWGEN_SIZERATE_UNIFORM.FLOW_RATE_HI)
+        return fsize, frate
+
+
+    def gen_flow_size_rate(self):
         """Generate flow size according to specified random model.
 
         Args:
@@ -80,101 +124,68 @@ class SimFlowGen:
                      We cast them to float64 for the sake of compatibility with functions using it.
 
         """
-        ret = 0.0
-        if (cfg.FLOW_SIZE_MODEL == 'uniform'):
-            ret = self.get_flow_size_uniform(lo=cfg.FLOW_SIZE_LO, hi=cfg.FLOW_SIZE_HI)
-        elif (cfg.FLOW_SIZE_MODEL == 'bimodal'):
-            ret = self.get_flow_size_bimodal(large_lo=cfg.FLOW_SIZE_LARGE_LO, \
-                                             large_hi=cfg.FLOW_SIZE_LARGE_HI, \
-                                             small_lo=cfg.FLOW_SIZE_SMALL_LO, \
-                                             small_hi=cfg.FLOW_SIZE_SMALL_HI)
+        fsize = frate = 0.0
+
+        if (cfg.FLOWGEN_SIZERATE_MODEL == 'uniform'):
+            fsize, frate = self.gen_flow_size_rate_uniform()
+        elif (cfg.FLOWGEN_SIZERATE_MODEL == 'bimodal'):
+            fsize, frate = self.gen_flow_size_rate_bimodal()
         else:
-            # Default to 'uniform'
-            ret = self.get_flow_size_uniform(cfg.FLOW_SIZE_LO, cfg.FLOW_SIZE_HI)
-        return ret
+            fsize, frate = self.gen_flow_size_rate_uniform()  # Default to 'uniform'
+        return fsize, frate
 
 
-    def get_flow_size_uniform(self, lo=cfg.FLOW_SIZE_LO, hi=cfg.FLOW_SIZE_HI):
-        """Generate flow size according to uniform random model
-
-        Args:
-            low (float64): Lower bound
-            high (float64): Upper bound
-
-        Return:
-            float64: Uniform random flow size, round to integral digit.
-
+    def gen_new_flow_with_src(self, ev_time, src_ip, sim_core):
         """
-        ret = np.random.uniform(lo, hi)
-        ret = round(ret, 0)     # Round to integral digit
-        return ret
-
-
-    def get_flow_size_bimodal(self, large_lo=cfg.FLOW_SIZE_LARGE_LO, \
-                                    large_hi=cfg.FLOW_SIZE_LARGE_HI, \
-                                    small_lo=cfg.FLOW_SIZE_SMALL_LO, \
-                                    small_hi=cfg.FLOW_SIZE_SMALL_HI):
-        """Generate flow size according to bimodal random model
-
-        Args:
-            large_low, large_hi (float64): Lower & upper bound for large flows
-            small_low, small_hi (float64): Lower & upper bound for small flows
-
-        Return:
-            float64: Uniform random flow size, round to integral digit.
-
         """
-        roll_dice = np.random.uniform(0, 1)
-        ret = 0.0
+        # Fixed src host. Pick a dst host.
+        dst = self.pick_dst(src_ip, sim_core)
+        # Generate flow size and rate.
+        fsize, frate = self.gen_flow_size_rate()                # Generate flow size
+        # Generate an EvFlowArrival event and return it.
+        event = EvFlowArrival(ev_time=ev_time, src_ip=src_ip, dst_ip=dst, \
+                              flow_size=fsize, flow_rate=frate)
+        return event
 
-        if(roll_dice < cfg.PROB_LARGE_FLOW):
-            ret = np.random.uniform(large_lo, large_hi)
+
+    def gen_new_flow_arr_saturate(self, ev_time, src_ip, sim_core):
+        """
+        """
+        new_ev_time = ev_time + cfg.FLOWGEN_ARR_SATURATE.NEXT_FLOW_DELAY
+        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, src_ip, sim_core)
+        return new_ev_time, new_EvFlowArrival
+
+
+    def gen_new_flow_arr_const(self, ev_time, sim_core):
+        """
+        """
+        hi = (1+cfg.FLOWGEN_ARR_CONST.CUTOFF) * 1.0/cfg.FLOWGEN_ARR_CONST.FLOW_ARR_RATE
+        lo = (1-cfg.FLOWGEN_ARR_CONST.CUTOFF) * 1.0/cfg.FLOWGEN_ARR_CONST.FLOW_ARR_RATE
+        new_intarr_time = np.random.uniform(lo, hi)
+        new_ev_time = ev_time + new_intarr_time
+
+        if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
+            new_src_ip  = rd.choice(self.hosts.keys())
         else:
-            ret = np.random.uniform(small_lo, small_hi)
-        ret = round(ret, 0)
-        return ret
+            new_src_ip  = rd.choice(self.hosts.keys()) # Default to 'uniform'
+
+        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
+        return new_ev_time, new_EvFlowArrival
 
 
-    def get_flow_rate(self):
-        """Generate flow rate according to specified random model.
-
-        Args:
-
-        Return:
-            float64: Flow rate (bytes per second).
-
+    def gen_new_flow_arr_exp(self, ev_time, sim_core):
         """
-        ret = 0.0
-        if (cfg.FLOW_RATE_MODEL == 'uniform'):
-            ret = self.get_flow_rate_uniform(cfg.FLOW_RATE_LO, cfg.FLOW_RATE_HI)
+        """
+        new_intarr_time = np.random.exponential(scale=1.0/cfg.FLOWGEN_ARR_EXP.FLOW_ARR_RATE)
+        new_ev_time = ev_time + new_intarr_time
+
+        if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
+            new_src_ip  = rd.choice(self.hosts.keys())
         else:
-            # Default to 'uniform'
-            ret = get_flow_rate_uniform(cfg.FLOW_RATE_LO, cfg.FLOW_RATE_HI)
-        return ret
+            new_src_ip  = rd.choice(self.hosts.keys()) # Default to 'uniform'
 
-
-    def get_flow_rate_uniform(self, lo=cfg.FLOW_RATE_LO, hi=cfg.FLOW_RATE_HI):
-        """Generate flow rate according to uniform random model
-
-        Args:
-            lo (float64): Lower bound
-            hi (float64): Upper bound
-
-        Return:
-            float64: Uniform random flow rate.
-
-        """
-        ret = np.random.uniform(lo, hi)
-        return ret
-
-
-    def gen_new_flow_with_src(self, ev_time, src, sim_core):
-        dst = self.pick_dst(src, sim_core)            # Pick a destination
-        fsize = self.get_flow_size()    # Generate flow size
-        frate = self.get_flow_rate()
-
-        ret = EvFlowArrival(ev_time=ev_time, src_ip=src, dst_ip=dst, flow_size=fsize, flow_rate=frate)
-        return ret
+        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
+        return new_ev_time, new_EvFlowArrival
 
 
     def gen_init_flows(self, ev_queue, sim_core):
@@ -186,12 +197,19 @@ class SimFlowGen:
             ev_queue (list of instances inherited from SimEvent): Event queue
             sim_core (instance of SimCore): Simulation core
         """
-        if (cfg.FLOW_INTARR_MODEL == 'saturate'):
-            for hst in self.hosts:
-                ev_time = np.random.uniform(0.0, cfg.LATEST_INIT_FLOW_TIME)
-                event = self.gen_new_flow_with_src(ev_time, hst, sim_core)
+        if (cfg.FLOWGEN_ARR_MODEL == 'saturate'):
+            # For each host, generate one flow with the host as its src host.
+            # New flows will be generated upon EvFlowEnd
+            for src_host in self.hosts:
+                ev_time = np.random.uniform(0.0, cfg.FLOWGEN_ARR_SATURATE.INIT_FLOWS_SPREAD)
+                event   = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
                 heappush(ev_queue, (ev_time, event))
-        else:
-            pass
-
-
+        elif (cfg.FLOWGEN_ARR_MODEL == 'const' or cfg.FLOWGEN_ARR_MODEL == 'exp'):
+            # Generate a single new flow. New flows will be generated upon EvFlowArrival
+            if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
+                src_host    = rd.choice(self.hosts.keys())
+            else:
+                src_host    = rd.choice(self.hosts.keys())  # Default to 'uniform'
+            ev_time     = 0.0
+            event       = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
+            heappush(ev_queue, (ev_time, event))

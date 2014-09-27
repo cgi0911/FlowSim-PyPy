@@ -10,7 +10,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Third-party modules
 import netaddr as na
 # User-defined modules
-from config import *
+from SimConfig import *
 
 
 class SimSwitch:

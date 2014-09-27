@@ -11,15 +11,20 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 
 # Built-in modules
+import os
 # Third-party modules
 # User-defined modules
 from sim.SimCore import *
+from sim.SimConfig import *
 
 if __name__ == '__main__':
     mySim = SimCore()
-    mySim.main_course()
-    # Run main course
-    #for fl in mySim.flows:
-    #    print mySim.flows[fl]
-    #for lk in mySim.topo.edges():
-    #    print mySim.topo.edge[lk[0]][lk[1]]['item']
+    if (cfg.DO_PROFILING == True):
+        import cProfile
+        import pstats
+        cProfile.run('mySim.main_course()', \
+                     os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats'))
+        pst = pstats.Stats(os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats'))
+        os.system("python -m pstats %s" %(os.path.join(cfg.LOG_DIR, 'profile_pstats.pstats')))
+    else:
+        mySim.main_course()
