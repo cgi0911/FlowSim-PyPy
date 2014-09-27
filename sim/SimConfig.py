@@ -90,7 +90,7 @@ FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
 
-FLOWGEN_ARR_MODEL           = 'saturate'    # Flow arrival model
+FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "saturate": Each host will be the source of
                                         #   one and exactly one active flow. A new flow is
                                         #   fired after the previous one comes to an end.
