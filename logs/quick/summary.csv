@@ -1,8 +1,8 @@
 ROUTING_MODE,spf
 DO_REROUTE,0
-n_EvFlowArrival,14994
-n_EvPacketIn,14992
+n_EvFlowArrival,15007
+n_EvPacketIn,15005
 n_Reject,0
-n_EvFlowEnd,14943
-n_EvIdleTimeout,14688
-exec_time,9.630644
+n_EvFlowEnd,14947
+n_EvIdleTimeout,14706
+exec_time,7.228562
