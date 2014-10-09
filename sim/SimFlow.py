@@ -39,34 +39,34 @@ class SimFlow:
         reroute (int): # of times this flow being rerouted
 
     Extra Notes:
-        1. Possible flow status: 'requesting', 'active', 'idle'
-
+        1. Possible flow status: 'requesting', 'active', 'finished', 'removed'
     """
 
     def __init__(   self,
-                    src_ip=na.IPAddress(0),
-                    dst_ip=na.IPAddress(0),
-                    src_node='',
-                    dst_node='',
-                    path=[],
-                    links=[],
-                    flow_size=0.0,
-                    flow_rate=0.0,
-                    curr_rate=0.0,
-                    avg_rate=0.0,
-                    bytes_left=0.0,
-                    bytes_sent=0.0,
-                    status='requesting',
-                    arrive_time = -1.0,
-                    install_time = -1.0,
-                    end_time = -1.0,
-                    remove_time = -1.0,
-                    update_time = -1.0,
-                    collect_time = -1.0,
-                    duration = -1.0,
-                    resend = 0,
-                    reroute = 0,
-                    cnt = 0
+                    src_ip          =na.IPAddress(0),
+                    dst_ip          =na.IPAddress(0),
+                    src_node        ='',
+                    dst_node        ='',
+                    path            =[],
+                    links           =[],
+                    flow_size       =0.0,
+                    flow_rate       =0.0,
+                    curr_rate       =0.0,
+                    avg_rate        =0.0,
+                    bytes_left      =0.0,
+                    bytes_sent      =0.0,
+                    status          = 'requesting',
+                    arrive_time     = float('inf'),
+                    install_time    = float('inf'),
+                    end_time        = float('inf'),
+                    est_end_time    = float('inf'),
+                    remove_time     = float('inf'),
+                    update_time     = float('inf'),
+                    collect_time    = float('inf'),
+                    duration        = float('inf'),
+                    resend          = 0,
+                    reroute         = 0,
+                    cnt             = 0
                 ):
         """
 
@@ -89,6 +89,7 @@ class SimFlow:
         self.arrive_time    = arrive_time
         self.install_time   = install_time
         self.end_time       = end_time
+        self.est_end_time   = est_end_time
         self.remove_time    = remove_time
         self.update_time    = update_time
         self.collect_time   = collect_time
@@ -126,24 +127,59 @@ class SimFlow:
         return ret
 
 
-    def update_flow(self, ev_time, asgn_bw=-1.0):
+    def install_flow(self, ev_time, path, links):
+        """Change the flow to 'active' status, and update states accordingly.
         """
-        """
-        # Calculate past behavior from update_time to now
-        if (self.status == 'active'):
-            bytes_sent_since_update =   self.curr_rate *                 \
-                                        (ev_time - self.update_time)
-            self.bytes_left         -=  bytes_sent_since_update
-            self.bytes_sent         =   self.flow_size - self.bytes_left
-            self.cnt                +=  bytes_sent_since_update
-            self.update_time        =   ev_time
-            self.avg_rate           =   self.bytes_sent / (ev_time - self.arrive_time)
-        # Update curr_rate & assigned flag
-        if (not asgn_bw == -1.0):
-            self.curr_rate          =   asgn_bw
-            self.assigned           =   True
-        # Estimate this flow's end time
-        est_end_time            =   ev_time + \
-                                    (self.bytes_left / self.curr_rate)
+        self.status                 =   'active'
+        self.update_time            =   ev_time
+        self.install_time           =   ev_time
+        self.path                   =   path
+        self.links                  =   links
 
-        return est_end_time, bytes_sent_since_update
+
+    def update_flow(self, ev_time):
+        """Change the flow's states up to ev_time.
+        """
+        bytes_recent                =   0.0
+
+        # If the flows's status is 'active', calculate the following states:
+        if (self.status == 'active'):
+            # bytes_recent: For an active flow, the # of transmitted bytes
+            #               since last state update
+            bytes_recent            =   self.curr_rate * (ev_time - self.update_time)
+            self.bytes_left         -=  bytes_recent
+            self.bytes_sent         =   self.flow_size - self.bytes_left
+            self.cnt                +=  bytes_recent
+            self.avg_rate           =   self.bytes_sent / (ev_time - self.arrive_time)
+
+        self.update_time            =   ev_time
+        return bytes_recent
+
+
+    def terminate_flow(self, ev_time):
+        """Change the flow to 'finished' status, and update states accordingly.
+        """
+        self.status         = 'finished'
+        self.update_time    = ev_time
+        self.end_time       = ev_time
+        self.est_end_time   = float('inf')
+        self.duration       = self.end_time - self.arrive_time
+        self.bytes_left     = 0.0       # To avoid tiny error caused by FP calculation
+        self.bytes_sent     = self.flow_size
+        self.curr_rate      = 0.0
+
+
+    def timeout_flow(self, ev_time):
+        """Change the flow to 'removed' status, and update states accordingly.
+        """
+        self.status         = 'removed'
+        self.update_time    = ev_time
+        self.remove_time    = ev_time
+
+
+    def assign_bw(self, ev_time, asgn_bw):
+        """When calculating flow BW, assign BW and change flag of the flow.
+        """
+        self.curr_rate              = asgn_bw
+        self.est_end_time           = ev_time + (self.bytes_left / self.curr_rate)
+        self.assigned               = True

@@ -25,7 +25,14 @@ class SimCoreCalculation:
     def sorted_flows_insert(self, flow_rate, flowobj, flow_key):
         """
         """
-        # Manually implement binary search. Although bisect library helps but it requires a
+        # If source rate is unlimited, we can simply put an 'inf' in the sorted_flows list.
+        if (cfg.SRC_LIMITED == 0):
+            self.sorted_flows.append((float('inf'), flowobj, flow_key))
+            return
+
+        # Or else, we need to have the list sorted in ascending order of flow source rate.
+        # Here we manually implement binary search.
+        # Why? Although bisect library implemets the search algorithm, but it requires a
         # separated sorted_keys list, which is not what I wanted.
         lo  = 0
         hi  = len(self.sorted_flows)
@@ -57,10 +64,18 @@ class SimCoreCalculation:
     def update_all_flows(self, ev_time):
         """
         """
-        pass
+        for fl in self.flows:
+            flowobj = self.flows[fl]
+            bytes_recent = flowobj.update_flow(ev_time)
+
+            if (flowobj.status == 'active'):
+                for lk in flowobj.links:
+                    # Update link byte counters
+                    self.link_byte_cnt[lk]  += bytes_recent
 
 
-    def calc_flow_rates_src_limited(self, ev_time):
+    #def calc_flow_rates_src_limited(self, ev_time):
+    def calc_flow_rates(self, ev_time):
         """Calculate flow rates (according to DevoFlow Algorithm 1), but is aware of
         each flow's source rate constraints.
 
@@ -71,32 +86,23 @@ class SimCoreCalculation:
             None. But will update flow and link statistics, as well as identify next ending
             flow and its estimated end time.
 
-        """
-        #heap_flows = []             # Keep a minheap for all flows, indexed by their
-        #                            # flowobj.flow_rate (max source rate of flow)
+        Extra Notes:
+            - If cfg.SRC_LIMITED == 0, the source rate (recorded in self.sorted_flows) for
+              each flow becomes float('inf'), so no need to worry about the source rate.
 
-        btnk_link = ('', '')        # Bottleneck link: defined by -
-                                    #   argmin_{all links}
-                                    #   {linkobj.unasgn_bw / linkobj.n_unasgn_flows}
+        """
+        btnk_link = ('', '')        # Bottleneck link: defined by:
+                                    #     argmin_{all links}
+                                    #     {linkobj.unasgn_bw / linkobj.n_unasgn_flows}
         btnk_bw = float('inf')      # As shown above, bottleneck BW defined by -
-                                    #   linkobj.unasgn_bw / linkobj.n_unasgn_flows
-        n_unprocessed_links = len(self.links)
+                                    #     linkobj.unasgn_bw / linkobj.n_unasgn_flows
+        n_unprocessed_links = 0
         n_unasgn_flows      = len(self.sorted_flows)
-        earliest_end_time   = float('inf')
-        earliest_end_flow   = ('', '')
+        self.next_end_time  = float('inf')
+        self.next_end_flow  = ('', '')
 
         for fl_tuple in self.sorted_flows:
-            fl_tuple[1].assigned = False
-
-        # Initialize flow variables and push to min-heap indexed by flow_rate
-        # for fl in self.flows:
-        #     flowobj = self.flows[fl]
-        #     if (not flowobj.status == 'active'):
-        #         continue
-        #     else:
-        #         flowobj.assigned = False
-        #         #heappush(heap_flows, (flowobj.flow_rate, flowobj, fl))
-        #         x += 1
+            fl_tuple[1].assigned    = False     # Reset "assigned" flag for every active flow
 
         # Initialize link variables and find first-round bottleneck link
         for lk in self.links:
@@ -110,48 +116,28 @@ class SimCoreCalculation:
                 if (linkobj.bw_per_flow < btnk_bw):
                     btnk_link   = lk
                     btnk_bw     = linkobj.bw_per_flow
+                n_unprocessed_links += 1
             else:
-                n_unprocessed_links -= 1
+                pass
 
-        s_ptr = 0
-        while (s_ptr < len(self.sorted_flows)):
-            if (n_unprocessed_links == 0 or n_unasgn_flows == 0):
-                break
+        # Start assigning curr_rate to flows
+        for mice_tuple in self.sorted_flows:
+            mice_bw, mice_flowobj, mice_flowkey = mice_tuple
 
-            #if (heap_flows[0][1].assigned == True):
-            #    heappop(heap_flows)
-            #    continue
-            if (self.sorted_flows[s_ptr][1].assigned == True):
-                s_ptr += 1
+            if (mice_flowobj.assigned == True):
                 continue
-
-            # Get the flow BW, flowobj and flow key at root of minheap
-            #mice_bw, mice_flowobj, mice_flowkey = heap_flows[0]
-            mice_bw, mice_flowobj, mice_flowkey = self.sorted_flows[s_ptr]
 
             recalc_btnk = False     # Flag for recalculation of global bottlneck
 
             # Case 1: BW assigned to flow(s) limited by the mice flow's own flow_rate
             if (mice_bw < btnk_bw):
-                #print "process flow"
-                #heappop(heap_flows)
-                s_ptr += 1
+                mice_flowobj.assign_bw(ev_time, mice_bw)
 
-                # Update this flow
-                est_end_time, bytes_sent_since_update = \
-                        mice_flowobj.update_flow(ev_time, mice_bw)
-
-                if (est_end_time < earliest_end_time):
-                    earliest_end_time = est_end_time
-                    earliest_end_flow = mice_flowkey
-
-                # Update links traversed by the flow
-                #for lk in self.get_links_on_path(mice_flowobj.path):
                 for lk in mice_flowobj.links:
-                    self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                     linkobj                 =   self.linkobjs[lk]
                     linkobj.unasgn_bw       -=  mice_bw
                     linkobj.n_unasgn_flows  -=  1
+
                     if (linkobj.n_unasgn_flows > 0):
                         linkobj.bw_per_flow     =   linkobj.unasgn_bw /             \
                                                     float(linkobj.n_unasgn_flows)
@@ -159,40 +145,30 @@ class SimCoreCalculation:
                             btnk_link   = lk
                             btnk_bw     = linkobj.bw_per_flow
                     else:
+                        n_unprocessed_links -= 1
                         if (lk == btnk_link):
                             recalc_btnk = True
-                        n_unprocessed_links -= 1
 
                 n_unasgn_flows -= 1
 
             # Case 2: BW assigned to flows(s) limited by max-min fair on btnk_link
             else:
-                #print "process link"
-                # Process all links on the btnk_link
                 for fl in self.linkobjs[btnk_link].flows:
                     flowobj = self.flows[fl]
 
-                    if (not flowobj.status == 'active'):
-                        continue
+                    if (not flowobj.status == 'active'):    continue
 
-                    elif (flowobj.assigned == True):
-                        continue
+                    elif (flowobj.assigned == True):        continue
 
                     else:
-                        # Calculate estimated end time of this flow
-                        est_end_time, bytes_sent_since_update = \
-                                flowobj.update_flow(ev_time, btnk_bw)
-                        if (est_end_time < earliest_end_time):
-                            earliest_end_time = est_end_time
-                            earliest_end_flow = fl
+                        flowobj.assign_bw(ev_time, btnk_bw)
 
-                        # Update links traversed by this flow
-                        #for lk in self.get_links_on_path(flowobj.path):
                         for lk in flowobj.links:
-                            self.link_byte_cnt[lk]  +=  bytes_sent_since_update
+                            #self.link_byte_cnt[lk]  +=  bytes_sent_since_update
                             linkobj                 =   self.linkobjs[lk]
                             linkobj.unasgn_bw       -=  btnk_bw
                             linkobj.n_unasgn_flows  -=  1
+
                             if (linkobj.n_unasgn_flows > 0):
                                 linkobj.bw_per_flow =   linkobj.unasgn_bw /             \
                                                         float(linkobj.n_unasgn_flows)
@@ -206,128 +182,15 @@ class SimCoreCalculation:
 
                     n_unasgn_flows -= 1
 
-            #if (n_unprocessed_links == 0 or len(heap_flows) == 0):
-            #    break
-
             if (n_unprocessed_links > 0 and recalc_btnk == True):
-                #print "Recalculate btnk"
-                btnk_link = min([lk for lk in self.links \
-                                 if self.linkobjs[lk].n_unasgn_flows > 0], \
-                                key=lambda x: self.linkobjs[x].bw_per_flow)
-                btnk_bw = self.linkobjs[btnk_link].bw_per_flow
-                #print btnk_link, btnk_bw
+                btnk_link   = min([lk for lk in self.links \
+                                  if self.linkobjs[lk].n_unasgn_flows > 0], \
+                                  key=lambda x: self.linkobjs[x].bw_per_flow)
+                btnk_bw     = self.linkobjs[btnk_link].bw_per_flow
 
-        # Finally, update the estimated earliest-ending flow
-        self.next_end_time = earliest_end_time
-        self.next_end_flow = earliest_end_flow
-
-
-    def calc_flow_rates_src_unlimited(self, ev_time):
-        """Calculate flow rates (according to DevoFlow Algorithm 1). Flows can transmit
-        as fast as possible under link capacity constraints and max-min fairness.
-
-        Args:
-            None
-
-        Returns:
-            None. But will update flow and link statistics, as well as identify next ending
-            flow and its estimated end time.
-
-        """
-        # The following local dicts have links as their keys (represented by 2-tuple of node names)
-        # Values are either float64 (caps, unasgn_caps) or int (active_flows, unasgn_flows)
-        link_bw = {}                # Value: maximum BW on that link
-        link_unasgn_bw = {}         # Value: Unassigned BW on that link
-        link_n_active_flows = {}    # Value: # of active flows on that link
-        link_n_unasgn_flows = {}    # Value: # of unassigned flows on that link
-
-        # The following local dicts have flows as their keys (represented by 2-tuple of IPs)
-        flow_asgn = {}          # Value: boolean that signals whether the flow is assigned.
-
-        # Initialization:
-        for lk in self.links:
-            cap = self.linkobjs[lk].cap
-            n_active_flows = self.linkobjs[lk].get_n_active_flows()
-            link_unasgn_bw[lk] = link_bw[lk] = cap
-            link_n_unasgn_flows[lk] = link_n_active_flows[lk] = n_active_flows
-
-        for fl in self.flows:
-            if (not self.flows[fl].status == 'active'):
-                continue
-            else:
-                flow_asgn[fl] = False
-
-        # ---- Start iterating over bottleneck links ----
-        list_unfin_links = [lk for lk in self.links if link_n_unasgn_flows[lk] > 0]
-                                                        # List of links that are not yet processed
-        earliest_end_time = 99999999.9  # Just a very large float number
-        earliest_end_flow = ('', '')
-
-        while (len(list_unfin_links) > 0):
-            # Find the bottleneck link (link with minimum avg. BW for unassigned links)
-            btneck_link = sorted(list_unfin_links, \
-                                 key=lambda lk: link_unasgn_bw[lk]/link_n_unasgn_flows[lk], \
-                                 reverse=False)[0]
-            btneck_bw = link_unasgn_bw[btneck_link]/link_n_unasgn_flows[btneck_link]
-
-            # Update all active flows on bottleneck links
-            for fl in self.linkobjs[btneck_link].flows:
-                flowobj = self.flows[fl]    # Store the pointer to self.flows[fl]!
-                                            # This makes exec time a lot shorter!
-                if (not flowobj.status == 'active'):
-                    continue
-                #if (fl in flow_asgn):
-                else:
-                    if (flow_asgn[fl] == False):
-                        # ---- Flow operations ----
-                        # Write btneck_bw to flow
-                        flow_asgn[fl] = True
-
-                        # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
-                        # update_time, etc.
-                        # bytes_sent_since_update = flowobj.curr_rate *                   \
-                        #                         (ev_time - flowobj.update_time)
-                        # flowobj.bytes_left  -=  bytes_sent_since_update
-                        # flowobj.bytes_sent  =   flowobj.flow_size - flowobj.bytes_left
-                        # flowobj.update_time =   ev_time
-                        # flowobj.avg_rate    =   flowobj.bytes_sent /                    \
-                        #                         (ev_time - flowobj.arrive_time)
-
-                        # # Calculate & update next ending flow and its estimated end time
-                        # flowobj.curr_rate   =   btneck_bw
-                        # est_end_time        =   ev_time + \
-                        #                         (flowobj.bytes_left / flowobj.curr_rate)
-                        # if (est_end_time < earliest_end_time):
-                        #     earliest_end_time = est_end_time
-                        #     earliest_end_flow = fl
-                        est_end_time, bytes_sent_since_update = \
-                                flowobj.update_flow(ev_time, btneck_bw)
-                        if (est_end_time < earliest_end_time):
-                            earliest_end_time = est_end_time
-                            earliest_end_flow = fl
-
-                        # ---- Link operations ----
-                        # Update link unassigned BW and link unassigned flows along the path
-                        #path = flowobj.path
-
-                        #for lk in self.get_links_on_path(path):
-                        for lk in flowobj.links:
-                            self.link_byte_cnt[lk]  +=  bytes_sent_since_update
-                            link_unasgn_bw[lk]      -=  btneck_bw
-                            link_n_unasgn_flows[lk] -=  1
-                            if (link_n_unasgn_flows[lk] == 0 or link_unasgn_bw[lk] == 0.0):
-                                list_unfin_links.remove(lk)
-
-        self.next_end_time = earliest_end_time
-        self.next_end_flow = earliest_end_flow
-
-
-    def calc_flow_rates(self, ev_time):
-        """
-        """
-
-        if (cfg.SRC_LIMITED > 0):
-            self.calc_flow_rates_src_limited(ev_time)
-        else:
-            self.calc_flow_rates_src_unlimited(ev_time)
-
+        # Finally, get the estimated earliest-ending flow
+        for tpl in self.sorted_flows:
+            est = tpl[1].est_end_time
+            if (est < self.next_end_time):
+                self.next_end_time = est
+                self.next_end_flow = tpl[2]

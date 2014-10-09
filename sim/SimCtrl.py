@@ -172,9 +172,9 @@ class SimCtrl:
             self.comB()
             # Pop the new eleph flow that has largest count
             fl = new_eleph_flows.pop(0)
-            self.old_eleph_flows[fl] = 0.0
-            pass
-
+            # Calculate OAB for each path
+            # Commit path change of the selected new eleph flow
+            # Add the selected flow to old_eleph_flows, and remove from new_eleph_flow
 
 
     def setup_path_db(self):

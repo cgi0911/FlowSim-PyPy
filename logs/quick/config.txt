@@ -103,7 +103,7 @@ FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "const": Flow arrival rate is a specified constant.
                                         # "exp": Flow inter-arrival time is exponentially distributed
 
-SRC_LIMITED                 = 0         # If 1, flow rates are limited by its source rate.
+SRC_LIMITED                 = 0          # If 1, flow rates are limited by its source rate.
                                         # If 0, flow can transmit as fast as possible subject to
                                         #   link capacity constraints and max-min fairness.
 
@@ -130,7 +130,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 250.0       # flows/sec
+    FLOW_ARR_RATE = 100.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

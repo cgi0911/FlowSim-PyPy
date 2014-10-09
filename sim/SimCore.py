@@ -389,8 +389,6 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
             elif (ev_type == 'EvIdleTimeout'):
                 self.handle_EvIdleTimeout(ev_time, event)
 
-            # Handle EvHardTimeout
-
             # Handle EvCollectCnt
             elif (ev_type == 'EvCollectCnt'):
                 self.handle_EvCollectCnt(ev_time, event)
@@ -408,7 +406,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
                 self.handle_EvLogTableUtil(ev_time, event)
 
         # Finalize
-        self.calc_flow_rates(self.sim_time)
+        self.update_all_flows(self.sim_time)
         self.exec_ed_time = time()
 
         # Step 4: Dump list of records to csv files

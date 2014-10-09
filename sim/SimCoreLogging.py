@@ -56,7 +56,7 @@ class SimCoreLogging:
         self.col_flow_stats =   ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', \
                                  'bytes_sent', 'bytes_left', 'avg_rate', 'curr_rate', \
                                  'arrive_time', 'install_time', 'end_time', 'remove_time', \
-                                 'update_time', 'duration', 'status', 'resend', 'reroute']
+                                 'update_time', 'duration', 'status', 'resend', 'reroute', 'est_end_time']
         # Column names for those who are going to be averaged and logged
         self.col_avg_link_util  =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
                                     'throughput'] + [str(lk) for lk in self.links]
@@ -101,22 +101,15 @@ class SimCoreLogging:
         list_flows  = []
 
         # Iterate over all flows, update these flows
-        for fl in self.flows:
-            if (not self.flows[fl].status == 'active'):
-                continue
+        #for fl in self.flows:
+            #if (not self.flows[fl].status == 'active'):     continue
 
-            flowobj = self.flows[fl]
-            est_end_time, bytes_sent = flowobj.update_flow(ev_time)
-            links_on_path = flowobj.links
-            #bytes_sent = self.flows[fl].curr_rate * (ev_time - self.flows[fl].update_time)
+            #flowobj = self.flows[fl]
+            #est_end_time, bytes_sent = flowobj.update_flow(ev_time)
+            #links_on_path = flowobj.links
 
-            for lk in links_on_path:
-                self.link_byte_cnt[lk] += bytes_sent
-
-            #flowobj.bytes_sent += bytes_sent
-            #flowobj.bytes_left -= bytes_sent
-            #flowobj.update_time = ev_time
-
+            #for lk in links_on_path:
+            #    self.link_byte_cnt[lk] += bytes_sent
 
         # Get link_util and link_flows info
         for lk in self.link_byte_cnt:
