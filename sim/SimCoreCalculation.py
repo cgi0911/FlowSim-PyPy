@@ -54,6 +54,12 @@ class SimCoreCalculation:
                 return
 
 
+    def update_all_flows(self, ev_time):
+        """
+        """
+        pass
+
+
     def calc_flow_rates_src_limited(self, ev_time):
         """Calculate flow rates (according to DevoFlow Algorithm 1), but is aware of
         each flow's source rate constraints.
@@ -279,18 +285,23 @@ class SimCoreCalculation:
 
                         # Write updated statistics to flow: curr_rate, bytes_left, bytes_sent,
                         # update_time, etc.
-                        bytes_sent_since_update = flowobj.curr_rate *                   \
-                                                (ev_time - flowobj.update_time)
-                        flowobj.bytes_left  -=  bytes_sent_since_update
-                        flowobj.bytes_sent  =   flowobj.flow_size - flowobj.bytes_left
-                        flowobj.update_time =   ev_time
-                        flowobj.avg_rate    =   flowobj.bytes_sent /                    \
-                                                (ev_time - flowobj.arrive_time)
+                        # bytes_sent_since_update = flowobj.curr_rate *                   \
+                        #                         (ev_time - flowobj.update_time)
+                        # flowobj.bytes_left  -=  bytes_sent_since_update
+                        # flowobj.bytes_sent  =   flowobj.flow_size - flowobj.bytes_left
+                        # flowobj.update_time =   ev_time
+                        # flowobj.avg_rate    =   flowobj.bytes_sent /                    \
+                        #                         (ev_time - flowobj.arrive_time)
 
-                        # Calculate & update next ending flow and its estimated end time
-                        flowobj.curr_rate   =   btneck_bw
-                        est_end_time        =   ev_time + \
-                                                (flowobj.bytes_left / flowobj.curr_rate)
+                        # # Calculate & update next ending flow and its estimated end time
+                        # flowobj.curr_rate   =   btneck_bw
+                        # est_end_time        =   ev_time + \
+                        #                         (flowobj.bytes_left / flowobj.curr_rate)
+                        # if (est_end_time < earliest_end_time):
+                        #     earliest_end_time = est_end_time
+                        #     earliest_end_flow = fl
+                        est_end_time, bytes_sent_since_update = \
+                                flowobj.update_flow(ev_time, btneck_bw)
                         if (est_end_time < earliest_end_time):
                             earliest_end_time = est_end_time
                             earliest_end_flow = fl

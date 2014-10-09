@@ -29,6 +29,46 @@ class SimCtrl:
 
 
     """
+    class NodeRec:
+        """Record of node attributes at controller.
+        """
+        def __init__(self, nd, sim_core):
+            """Constructor of NodeRec class.
+
+            Args:
+                sim_core (Instance of SimCore)
+                nd (str): Node name
+            """
+            self.table_size     = sim_core.get_node_attr(nd, 'table_size')
+
+
+    class LinkRec:
+        """Record of link attributes at controller.
+        """
+        def __init__(self, lk, sim_core):
+            """Constructor of LinkRec class.
+
+            Args:
+                sim_core (Instance of SimCore)
+                lk (2-tuple of str): Link key, which is a 2-tuple of node names.
+            """
+            self.cap            = sim_core.get_link_attr(lk[0], lk[1], 'cap')
+            self.usage          = 0.0
+            self.util           = 0.0
+
+
+    class FlowRec:
+        """Record of flow attributes at controller.
+        """
+        def __init__(self, fl, sim_core):
+            """Constructor of FlowRec class.
+
+            """
+            self.src_node       = fl[0]
+            self.dst_node       = fl[1]
+            self.path           = sim_core.flows[fl].path
+            self.cnt            = 0.0
+
 
     def __init__(self, sim_core):
         """Constructor of SimCtrl class.
@@ -43,101 +83,27 @@ class SimCtrl:
 
         """
         # ---- Initialize topology graph by copying SimCore's topology ----
-        # self.topo = sim_core.topo
-        self.topo = nx.Graph()
+        self.sim_core   = sim_core
+        self.topo       = nx.Graph()
         self.topo.add_nodes_from(sim_core.topo.nodes())
         self.topo.add_edges_from(sim_core.topo.edges())
-        self.nodes = self.topo.nodes()
-        self.edges = self.topo.edges()
-
-        for nd in self.nodes:
-            self.set_node_attr(nd, 'table_size', sim_core.get_node_attr(nd, 'table_size'))
-                                        # Table size, a.k.a. table capacity
-            self.set_node_attr(nd, 'cnt_table', {})
-                                        # Each node has a flow counter table.
-                                        # Key: (src_ip, dst_ip)
-                                        # Value: byte counter
-
-        for lk in self.edges:
-            self.set_link_attr(lk[0], lk[1], 'cap', sim_core.get_link_attr(lk[0], lk[1], 'cap'))
-            self.set_link_attr(lk[0], lk[1], 'usage', 0.0)
-            self.set_link_attr(lk[0], lk[1], 'util', 0.0)
+        self.noderecs   = {nd: SimCtrl.NodeRec(nd, sim_core) for nd in self.topo.nodes()}
+        self.linkrecs   = {lk: SimCtrl.LinkRec(lk, sim_core) for lk in self.topo.edges()}
+        self.flowrecs   = {}
+        self.old_eleph_flows = {}
 
         # ---- Hosts database ----
-        self.hosts = sim_core.hosts     # direct copy
+        self.hosts      = sim_core.hosts        # Pass by assignment
 
         # ---- Build k-path database ----
-        self.path_db = self.setup_path_db()
+        self.path_db    = self.setup_path_db()
 
 
     def __str__(self):
         return "Controller"
 
 
-    def get_node_attr(self, sw_name, attr_name):
-        """Get switch record (a.k.a. node) attribute by SW name and attribute name.
-
-        Args:
-            sw_name (string): Switch name
-            attr_name (string): Attribute name
-
-        Returns:
-            Variable type: Switch attribute
-
-        """
-        ret = self.topo.node[sw_name][attr_name]
-        return ret
-
-
-    def set_node_attr(self, sw_name, attr_name, val):
-        """Set switch record (a.k.a. node) attribute by SW name and attribute name.
-
-        Args:
-            sw_name (string): Switch name
-            attr_name (string): Attribute name
-            val (variable type): Set value
-
-        Returns:
-            None
-
-        """
-        self.topo.node[sw_name][attr_name] = val
-
-    def get_link_attr(self, node1, node2, attr_name):
-        """Get link record (a.k.a. edge) attribute by link node names and attribute name.
-
-        Args:
-            node1 (string): Name of link node 1
-            node2 (string): Name of link node 2
-                            Note that in nx.Graph, node1 and node2 are interchangeable.
-            attr_name (string): Attribute name
-
-        Returns:
-            Variable type: Link attribute
-
-        """
-        ret = self.topo.edge[node1][node2][attr_name]
-        return ret
-
-
-    def set_link_attr(self, node1, node2, attr_name, val):
-        """Set link record (a.k.a. edge) attribute by link node names and attribute name.
-
-        Args:
-            node1 (string): Name of link node 1
-            node2 (string): Name of link node 2
-                            Note that in nx.Graph, node1 and node2 are interchangeable.
-            attr_name (string): Attribute name
-            val (variable type): Set value
-
-        Returns:
-            None
-
-        """
-        self.topo.edge[node1][node2][attr_name] = val
-
-
-    def install_entry(self, path, src_ip, dst_ip):
+    def install_flow_entry(self, src_ip, dst_ip):
         """Install a flow entry (src_ip, dst_ip) as we've done at the SimSwitch instances.
 
         Args:
@@ -146,15 +112,69 @@ class SimCtrl:
             dst_ip (netaddr.IPAddress)
 
         """
-        for sw_name in path:
-            if (not sw_name in self.topo.node[sw_name]['cnt_table']):
-                self.topo.node[sw_name]['cnt_table'][(src_ip, dst_ip)] = 0.0
-                # Byte counter set to 0
+        if (not (src_ip, dst_ip) in self.flowrecs):
+            fl = (src_ip, dst_ip)
+            self.flowrecs[fl]     = SimCtrl.FlowRec(fl, self.sim_core)
 
 
-    def get_table_usage(self, sw_name):
-        ret = len(self.get_node_attr(sw_name, 'cnt_table'))
+    def remove_flow_entry(self, src_ip, dst_ip):
+        """
+        """
+        fl = (src_ip, dst_ip)
+
+        if (fl in self.flowrecs):
+            del self.flowrecs[fl]
+
+        if (fl in self.old_eleph_flows):
+            del self.old_eleph_flows[fl]
+
+
+    def get_table_usage(self, nd):
+        """
+        """
+        ret = len(self.sim_core.nodeobjs[nd].table)
         return ret
+
+
+    def collect_counters(self, ev_time):
+        """
+        """
+        for fl in self.flowrecs:
+            flowobj                 = self.sim_core.flows[fl]
+            self.flowrecs[fl].cnt   = flowobj.cnt
+            flowobj.cnt             = 0.0
+            flowobj.collect_time    = ev_time
+            #print ev_time, fl, self.flowrecs[fl].cnt, flowobj.status, flowobj.bytes_sent, \
+            #      flowobj.bytes_left, flowobj.flow_size
+
+
+    def comB(self):
+        """Compute max-min fair BW, considering only flows in old_eleph_flows.
+        """
+
+
+
+
+    def do_reroute(self, ev_time):
+        """
+        """
+        sorted_flows = sorted([fl for fl in self.flowrecs], \
+                              key=lambda x: self.flowrecs[x].cnt, reverse=True)
+        eleph_flows  = sorted_flows[:cfg.N_ELEPH_FLOWS]
+        #for fl in eleph_flows: print ev_time, fl, self.flowrecs[fl].cnt, self.sim_core.flows[fl].collect_time, \
+        #self.sim_core.flows[fl].status, self.sim_core.flows[fl].curr_rate
+        #print len(eleph_flows)
+        new_eleph_flows = [fl for fl in eleph_flows if (not fl in self.old_eleph_flows)]    # already sorted
+        #print len(new_eleph_flows), len(self.old_eleph_flows)
+
+        while (len(new_eleph_flows) > 0):
+            # Compute max-min fair BW allocation (considering old_eleph_flows only)
+            self.comB()
+            # Pop the new eleph flow that has largest count
+            fl = new_eleph_flows.pop(0)
+            self.old_eleph_flows[fl] = 0.0
+            pass
+
 
 
     def setup_path_db(self):
@@ -179,8 +199,8 @@ class SimCtrl:
         path_db = {}     # empty dict
 
         # Set up k paths for each src-dst node pair
-        for src in sorted(self.nodes):
-            for dst in sorted(self.nodes):
+        for src in sorted(self.topo.nodes()):
+            for dst in sorted(self.topo.nodes()):
                 if (not src == dst):
                     if (cfg.ROUTING_MODE == 'tablelb'):
                         if (cfg.K_PATH_METHOD == 'yen'):
@@ -318,7 +338,7 @@ class SimCtrl:
         ret = True
         for nd in path:
             usage = self.get_table_usage(nd)
-            table_size = self.get_node_attr(nd, 'table_size')
+            table_size = self.noderecs[nd].table_size
             if (usage >= table_size):
                 ret = False
                 break

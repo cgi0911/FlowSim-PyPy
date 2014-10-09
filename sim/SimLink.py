@@ -69,10 +69,6 @@ class SimLink:
 
         """
         ret = 0
-
-        #for fl in self.flows:
-        #    if (self.flows[fl].status == 'active'):
-        #        ret += 1
         ret = self.n_active_flows
 
         return ret

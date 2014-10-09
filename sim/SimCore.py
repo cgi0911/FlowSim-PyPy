@@ -321,7 +321,11 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
                                      EvLogTableUtil(ev_time=cfg.PERIOD_LOGGING)))
         if (cfg.DO_REROUTE > 0):
             heappush(self.ev_queue, (cfg.PERIOD_REROUTE, \
-                                     EvReroute(ev_time=cfg.PERIOD_REROUTE)))
+                                     EvReroute(ev_time=cfg.PERIOD_REROUTE+0.0001)))
+
+        if (cfg.DO_REROUTE > 0):
+            heappush(self.ev_queue, (cfg.PERIOD_COLLECT, \
+                                     EvCollectCnt(ev_time=cfg.PERIOD_COLLECT)))
 
         # Step 3: Main loop of simulation
         print "Logging to folder: %s" %(cfg.LOG_DIR)
@@ -386,8 +390,15 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
                 self.handle_EvIdleTimeout(ev_time, event)
 
             # Handle EvHardTimeout
-            # Handle EvPullStats
+
+            # Handle EvCollectCnt
+            elif (ev_type == 'EvCollectCnt'):
+                self.handle_EvCollectCnt(ev_time, event)
+
             # Handle EvReroute
+            elif (ev_type == 'EvReroute'):
+                self.handle_EvReroute(ev_time, event)
+
             # Handle EvLogLinkUtil
             elif (ev_type == 'EvLogLinkUtil'):
                 self.handle_EvLogLinkUtil(ev_time, event)

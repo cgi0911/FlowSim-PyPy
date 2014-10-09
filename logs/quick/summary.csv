@@ -1,8 +1,8 @@
-ROUTING_MODE,spf
-DO_REROUTE,0
-n_EvFlowArrival,15007
-n_EvPacketIn,15005
+ROUTING_MODE,ecmp
+DO_REROUTE,1
+n_EvFlowArrival,30011
+n_EvPacketIn,30010
 n_Reject,0
-n_EvFlowEnd,14947
-n_EvIdleTimeout,14706
-exec_time,7.228562
+n_EvFlowEnd,29917
+n_EvIdleTimeout,29917
+exec_time,35.586640

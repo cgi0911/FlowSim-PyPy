@@ -10,7 +10,7 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'quick'
+EXP_NAME    = 'default'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 15.0

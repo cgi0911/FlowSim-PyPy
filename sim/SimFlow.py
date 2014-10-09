@@ -62,9 +62,11 @@ class SimFlow:
                     end_time = -1.0,
                     remove_time = -1.0,
                     update_time = -1.0,
+                    collect_time = -1.0,
                     duration = -1.0,
                     resend = 0,
-                    reroute = 0
+                    reroute = 0,
+                    cnt = 0
                 ):
         """
 
@@ -89,9 +91,11 @@ class SimFlow:
         self.end_time       = end_time
         self.remove_time    = remove_time
         self.update_time    = update_time
+        self.collect_time   = collect_time
         self.duration       = duration
         self.resend         = resend
         self.reroute        = reroute
+        self.cnt            = cnt
 
         # These variables are used in calc_flow_rates
         self.assigned       = False
@@ -116,25 +120,28 @@ class SimFlow:
                 '    update_time: %.6f\n'   %(self.update_time) + \
                 '    duration: %.6f\n'      %(self.duration) + \
                 '    resend: %d\n'          %(self.resend) + \
-                '    reroute: %d\n'         %(self.reroute)
+                '    reroute: %d\n'         %(self.reroute) + \
+                '    cnt: %.6f\n'           %(self.cnt)
 
         return ret
 
 
-    def update_flow(self, ev_time, asgn_bw):
+    def update_flow(self, ev_time, asgn_bw=-1.0):
         """
         """
         # Calculate past behavior from update_time to now
-        bytes_sent_since_update =   self.curr_rate *                 \
-                                    (ev_time - self.update_time)
-        self.bytes_left         -=  bytes_sent_since_update
-        self.bytes_sent         =   self.flow_size - self.bytes_left
-        self.update_time        =   ev_time
-        self.avg_rate           =   self.bytes_sent /                \
-                                (ev_time - self.arrive_time)
+        if (self.status == 'active'):
+            bytes_sent_since_update =   self.curr_rate *                 \
+                                        (ev_time - self.update_time)
+            self.bytes_left         -=  bytes_sent_since_update
+            self.bytes_sent         =   self.flow_size - self.bytes_left
+            self.cnt                +=  bytes_sent_since_update
+            self.update_time        =   ev_time
+            self.avg_rate           =   self.bytes_sent / (ev_time - self.arrive_time)
         # Update curr_rate & assigned flag
-        self.curr_rate          =   asgn_bw
-        self.assigned           =   True
+        if (not asgn_bw == -1.0):
+            self.curr_rate          =   asgn_bw
+            self.assigned           =   True
         # Estimate this flow's end time
         est_end_time            =   ev_time + \
                                     (self.bytes_left / self.curr_rate)

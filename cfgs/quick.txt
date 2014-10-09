@@ -13,11 +13,11 @@ import os
 EXP_NAME    = 'quick'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 60.0
+SIM_TIME    = 120.0
 
-DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
+DO_REROUTE  = 1              # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'spf'           # Supported routing modes:
+ROUTING_MODE = 'ecmp'           # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'ecmp': Equal-cost multi-path
@@ -35,7 +35,7 @@ TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
-CAP_PER_LINK = 20.0
+CAP_PER_LINK = 10.0
 CAP_UNIT     = 1.0e9    # Gbps
 
 
@@ -71,10 +71,16 @@ PERIOD_LOGGING = 0.100          # Period of doing link util and table util loggi
 
 SW_CTRL_DELAY = 0.005           # Switch-to-controller delay
 CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
-IDLE_TIMEOUT = 1.000            # Idle timeout
+IDLE_TIMEOUT = 0.000            # Idle timeout
 REJECT_TIMEOUT = 0.300          # Timeout for flow re-request if rejected due to overflow
 
-PERIOD_REROUTE = 1.000          # Period of rerouting
+PERIOD_REROUTE = 2.500          # Period of rerouting
+PERIOD_COLLECT = 0.500          # Period of counter collection
+
+# ----------------------------------------
+# Reroute-related Parameters
+# ----------------------------------------
+N_ELEPH_FLOWS = 20
 
 # ----------------------------------------
 # Flow Generation Parameters
@@ -97,7 +103,7 @@ FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "const": Flow arrival rate is a specified constant.
                                         # "exp": Flow inter-arrival time is exponentially distributed
 
-SRC_LIMITED                 = 1         # If 1, flow rates are limited by its source rate.
+SRC_LIMITED                 = 0         # If 1, flow rates are limited by its source rate.
                                         # If 0, flow can transmit as fast as possible subject to
                                         #   link capacity constraints and max-min fairness.
 
@@ -110,12 +116,12 @@ class FLOWGEN_SIZERATE_UNIFORM:
 
 class FLOWGEN_SIZERATE_BIMODAL:
     PROB_LARGE_FLOW = 0.1
-    FLOW_SIZE_LARGE_LO = 5.0e8
-    FLOW_SIZE_LARGE_HI = 10.0e8
-    FLOW_RATE_LARGE_LO = 1.0e9
-    FLOW_RATE_LARGE_HI = 1.0e9
-    FLOW_SIZE_SMALL_LO = 5.0e6
-    FLOW_SIZE_SMALL_HI = 10.0e6
+    FLOW_SIZE_LARGE_LO = 3.0e9
+    FLOW_SIZE_LARGE_HI = 3.0e9
+    FLOW_RATE_LARGE_LO = 10.0e9
+    FLOW_RATE_LARGE_HI = 10.0e9
+    FLOW_SIZE_SMALL_LO = 1.0e7
+    FLOW_SIZE_SMALL_HI = 1.0e7
     FLOW_RATE_SMALL_LO = 5.0e7
     FLOW_RATE_SMALL_HI = 5.0e7
 

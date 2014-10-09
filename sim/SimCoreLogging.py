@@ -64,7 +64,7 @@ class SimCoreLogging:
                                     [str(lk) for lk in self.links]
         self.col_avg_table_util =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
                                     [str(nd) for nd in self.nodes]
-        self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute']
+        self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute', 'duration']
 
         # Record column vectors
         self.col_vec_link_util  = {k: [] for k in self.col_link_util}
@@ -106,15 +106,17 @@ class SimCoreLogging:
                 continue
 
             flowobj = self.flows[fl]
-            links_on_path = self.flows[fl].links
-            bytes_sent = self.flows[fl].curr_rate * (ev_time - self.flows[fl].update_time)
+            est_end_time, bytes_sent = flowobj.update_flow(ev_time)
+            links_on_path = flowobj.links
+            #bytes_sent = self.flows[fl].curr_rate * (ev_time - self.flows[fl].update_time)
 
             for lk in links_on_path:
                 self.link_byte_cnt[lk] += bytes_sent
 
-            flowobj.bytes_sent += bytes_sent
-            flowobj.bytes_left -= bytes_sent
-            flowobj.update_time = ev_time
+            #flowobj.bytes_sent += bytes_sent
+            #flowobj.bytes_left -= bytes_sent
+            #flowobj.update_time = ev_time
+
 
         # Get link_util and link_flows info
         for lk in self.link_byte_cnt:
@@ -282,10 +284,14 @@ class SimCoreLogging:
                                      fieldnames=self.col_flow_stats, \
                                      dialect='flowsim')
 
+        # Records the flows that are not yet removed
+        for fl in self.flows:
+            recs.append(self.log_flow_stats(self.flows[fl]))
+
         # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_flow_stats:
-            temp            = col_vecs[col]
+            temp            = [ele for ele in col_vecs[col] if (not ele == -1.0)]
             avg_rec[col]    = float(sum(temp))/len(temp)
         avg_rec['src_ip'] = 'average'
 

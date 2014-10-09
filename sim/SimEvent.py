@@ -189,3 +189,25 @@ class EvLogTableUtil(SimEvent):
 
     def __init__(self, **kwargs):
         SimEvent.__init__(self, ev_type='EvLogTableUtil', ev_time=kwargs.get('ev_time', 0.0))
+
+
+class EvCollectCnt(SimEvent):
+    """Event that signals the controller to collect counters from simulation core.
+
+    Attributes:
+        ev_type (str): 'EvCollectCnt'
+    """
+
+    def __init__(self, **kwargs):
+        SimEvent.__init__(self, ev_type='EvCollectCnt', ev_time=kwargs.get('ev_time', 0.0))
+
+
+class EvReroute(SimEvent):
+    """Event that signals the simulated controllers to reroute elephant flows.
+
+    Attributes:
+        ev_type (str): 'EvReroute'
+    """
+
+    def __init__(self, **kwargs):
+        SimEvent.__init__(self, ev_type='EvReroute', ev_time=kwargs.get('ev_time', 0.0))
