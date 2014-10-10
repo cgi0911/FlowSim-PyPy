@@ -67,10 +67,11 @@ class SimCtrl:
             """Constructor of FlowRec class.
 
             """
-            self.src_node       = fl[0]
-            self.dst_node       = fl[1]
-            self.path           = sim_core.flows[fl].path
-            self.links          = sim_core.flows[fl].links
+            flowobj             = sim_core.flows[fl]
+            self.src_node       = flowobj.src_node
+            self.dst_node       = flowobj.dst_node
+            self.path           = flowobj.path
+            self.links          = flowobj.links
             self.cnt            = 0.0
 
 
@@ -200,7 +201,50 @@ class SimCtrl:
 
 
     def get_oab_on_link(self, lk):
-        pass
+        """
+        """
+        lkrec   = self.linkrecs[lk]
+        cap     = lkrec.cap
+        flows   = lkrec.flows
+        n_old_eleph     = len(self.old_eleph_flows)
+        sorted_flows    = sorted(lkrec.flows, key=lambda x: self.old_eleph_flows[x], reverse=True)
+        tilda_flows     = []
+
+        for i in range(len(sorted_flows) - 1):
+            fl = sorted_flows[i]
+            bw = self.old_eleph_flows[fl]
+
+            hat_bw  = 0.0
+            hat_num = 0
+            for j in range(i+1, len(sorted_flows)):
+                x = sorted_flows[j]
+                bw_x = self.old_eleph_flows[x]
+                if (bw_x < bw):
+                    hat_bw += bw_x
+                    hat_num += 1
+
+            if (bw >= (cap-hat_bw)/(n_old_eleph - hat_num + 1) ):
+                tilda_flows.append(fl)
+
+        sub_sum = sum(self.old_eleph_flows[fl] for fl in sorted_flows if not fl in tilda_flows)
+        oab_link = (cap-sub_sum) / (len(tilda_flows)+1)
+
+        return oab_link
+            
+
+    def get_oab_on_path(self, pth):
+        """
+        """
+        links = self.sim_core.get_links_on_path(pth)
+        oab_path = min([self.get_oab_on_link(lk) for lk in links])
+        return oab_path
+
+
+    def get_best_path(self, path_set):
+        """
+        """
+        best_path = max(path_set, key=lambda x: self.get_oab_on_path(x))
+        return best_path
 
 
     def do_reroute(self, ev_time):
@@ -221,7 +265,26 @@ class SimCtrl:
             # Pop the new eleph flow that has largest count
             fl = new_eleph_flows.pop(0)
             # Calculate OAB for each path
+            src     = self.flowrecs[fl].src_node
+            dst     = self.flowrecs[fl].dst_node
+            path_set = self.path_db[(src, dst)]
+            best_path = self.get_best_path(path_set)
             # Commit path change of the selected new eleph flow
+            flowobj = self.sim_core.flows[fl]
+            if (not flowobj.path == best_path):
+                old_path        = flowobj.path
+                old_links       = flowobj.links
+                new_path        = best_path
+                new_links       = self.sim_core.get_links_on_path(best_path)
+                for nd in old_path:     self.sim_core.nodeobjs[nd].remove_flow_entry(fl[0], fl[1])
+                for lk in old_links:    self.sim_core.linkobjs[lk].remove_flow_entry(fl[0], fl[1])                
+                flowobj.path    = new_path
+                flowobj.links   = new_links
+                for nd in new_path:     self.sim_core.nodeobjs[nd].install_flow_entry(fl[0], fl[1])
+                for lk in new_links:    self.sim_core.linkobjs[lk].install_flow_entry(fl[0], fl[1], flowobj)
+                flowobj.reroute += 1
+                self.flowrecs[fl].path = best_path
+                #print "reroute", fl, old_path, new_path
             # Add the selected flow to old_eleph_flows, and remove from new_eleph_flow
             self.old_eleph_flows[fl] = 0.0
 

@@ -52,10 +52,10 @@ class SimLink:
         return ret
 
 
-    def install_entry(self, src_ip, dst_ip, flow_item):
+    def install_flow_entry(self, src_ip, dst_ip, flowobj):
         """
         """
-        self.flows[(src_ip, dst_ip)] = flow_item
+        self.flows[(src_ip, dst_ip)] = flowobj
 
 
     def get_n_active_flows(self):

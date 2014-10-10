@@ -92,7 +92,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
 
         # ---- Keeping flow records ----
         self.flows = {}     # Empty dict at first.
-        self.next_end_time = 999999.9   # Records next ending flow's estimated ending time
+        self.next_end_time = float('inf')  # Records next ending flow's estimated ending time
         self.next_end_flow = ('', '')   # Records next ending flow
 
         # ---- Constructor of base classes ----
@@ -280,7 +280,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         #for lk in self.get_links_on_path(path):
         for lk in links:
             flowobj = self.flows[(src_ip, dst_ip)]
-            self.linkobjs[lk].install_entry(src_ip, dst_ip, flowobj)
+            self.linkobjs[lk].install_flow_entry(src_ip, dst_ip, flowobj)
 
 
     def create_hosts(self):
