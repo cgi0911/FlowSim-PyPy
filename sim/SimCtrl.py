@@ -55,6 +55,9 @@ class SimCtrl:
             self.cap            = sim_core.get_link_attr(lk[0], lk[1], 'cap')
             self.usage          = 0.0
             self.util           = 0.0
+            self.unasgn_bw      = self.cap
+            self.flows          = []
+            self.unasgn_flows   = []
 
 
     class FlowRec:
@@ -67,6 +70,7 @@ class SimCtrl:
             self.src_node       = fl[0]
             self.dst_node       = fl[1]
             self.path           = sim_core.flows[fl].path
+            self.links          = sim_core.flows[fl].links
             self.cnt            = 0.0
 
 
@@ -144,15 +148,59 @@ class SimCtrl:
             self.flowrecs[fl].cnt   = flowobj.cnt
             flowobj.cnt             = 0.0
             flowobj.collect_time    = ev_time
-            #print ev_time, fl, self.flowrecs[fl].cnt, flowobj.status, flowobj.bytes_sent, \
-            #      flowobj.bytes_left, flowobj.flow_size
 
 
     def comB(self):
         """Compute max-min fair BW, considering only flows in old_eleph_flows.
         """
+        unproc_links                = []
+
+        for lk in self.linkrecs:
+            lkrec                   = self.linkrecs[lk]
+            lkrec.unasgn_bw         = lkrec.cap
+            lkrec.flows             = []
+            lkrec.unasgn_flows      = []
+
+        for fl in self.old_eleph_flows:
+            for lk in self.flowrecs[fl].links:
+                lkrec = self.linkrecs[lk]
+                lkrec.flows.append(fl)
+                lkrec.unasgn_flows.append(fl)
+                if (not lk in unproc_links):
+                    unproc_links.append(lk)
+
+        while (len(unproc_links) > 0):
+            btnk_link = ''
+            btnk_bw   = float('inf')
+
+            to_remove_unproc_links = []
+            for lk in unproc_links:
+                lkrec = self.linkrecs[lk]
+                if (lkrec.unasgn_flows == []):
+                    to_remove_unproc_links.append(lk)
+                else:
+                    bw_per_flow = lkrec.unasgn_bw / len(lkrec.unasgn_flows)
+                    if (bw_per_flow < btnk_bw):
+                        btnk_link = lk
+                        btnk_bw   = bw_per_flow
+
+            for lk in to_remove_unproc_links:   unproc_links.remove(lk)
+
+            if (unproc_links == []):    break
+
+            btnk_lkrec = self.linkrecs[btnk_link]
+            for fl in btnk_lkrec.unasgn_flows:
+                self.old_eleph_flows[fl] = btnk_bw
+                for lk in self.flowrecs[fl].links:
+                    lkrec = self.linkrecs[lk]
+                    lkrec.unasgn_flows.remove(fl)
+                    lkrec.unasgn_bw -= btnk_bw
+
+            unproc_links.remove(btnk_link)
 
 
+    def get_oab_on_link(self, lk):
+        pass
 
 
     def do_reroute(self, ev_time):
@@ -175,6 +223,7 @@ class SimCtrl:
             # Calculate OAB for each path
             # Commit path change of the selected new eleph flow
             # Add the selected flow to old_eleph_flows, and remove from new_eleph_flow
+            self.old_eleph_flows[fl] = 0.0
 
 
     def setup_path_db(self):

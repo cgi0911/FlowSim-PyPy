@@ -56,7 +56,7 @@ class SimCoreLogging:
         self.col_flow_stats =   ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', \
                                  'bytes_sent', 'bytes_left', 'avg_rate', 'curr_rate', \
                                  'arrive_time', 'install_time', 'end_time', 'remove_time', \
-                                 'update_time', 'duration', 'status', 'resend', 'reroute', 'est_end_time']
+                                 'update_time', 'duration', 'status', 'resend', 'reroute']
         # Column names for those who are going to be averaged and logged
         self.col_avg_link_util  =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
                                     'throughput'] + [str(lk) for lk in self.links]
