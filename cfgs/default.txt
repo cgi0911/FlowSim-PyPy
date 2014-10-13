@@ -15,7 +15,7 @@ DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
 
-DO_REROUTE  = 0              # Do elephant flow rerouting (please refer to paper draft)
+DO_REROUTE  = 1              # Do elephant flow rerouting (please refer to paper draft)
 
 ROUTING_MODE = 'ecmp'           # Supported routing modes:
                                 # 'tablelb': Table load-balancing routing using k-path
