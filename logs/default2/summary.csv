@@ -1,8 +1,0 @@
-ROUTING_MODE,ecmp
-DO_REROUTE,0
-n_EvFlowArrival,23995
-n_EvPacketIn,23994
-n_Reject,0
-n_EvFlowEnd,23970
-n_EvIdleTimeout,23970
-exec_time,44.894184

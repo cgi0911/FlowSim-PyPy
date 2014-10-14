@@ -72,10 +72,12 @@ class SimCoreLogging:
         self.col_vec_table_util = {k: [] for k in self.col_table_util}
         self.col_vec_flow_stats = {k: [] for k in self.col_flow_stats}
 
-        # Byte counters for each link
+        # Byte counters for each link, and global throughput
         self.link_byte_cnt = {}
         for lk in self.links:
             self.link_byte_cnt[lk] = 0.0
+        self.global_throughput = 0.0
+
 
         # Parameters & counters for summary
         self.summary_message = ''   # A string that stores the whole summary message
@@ -85,6 +87,7 @@ class SimCoreLogging:
         self.n_EvIdleTimeout = 0
         self.n_Reject = 0
         self.n_active_flows = 0
+        self.n_rerouted_flows = 0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
         # Register CSV dialect
@@ -130,7 +133,7 @@ class SimCoreLogging:
         ret_util['q1']          = np.percentile(list_util, 25)
         ret_util['q3']          = np.percentile(list_util, 75)
         ret_util['median']      = np.percentile(list_util, 50)
-        ret_util['throughput']  = np.sum(list_usage) / cfg.PERIOD_LOGGING
+        ret_util['throughput']  = self.global_throughput / cfg.PERIOD_LOGGING
         # Calculate statistics for link_flows
         ret_flows['mean']       = np.mean(list_flows)
         ret_flows['stdev']      = np.std(list_flows)
@@ -144,9 +147,10 @@ class SimCoreLogging:
         for k in ret_util:  self.col_vec_link_util[k].append(ret_util[k])
         for k in ret_flows: self.col_vec_link_flows[k].append(ret_flows[k])
 
-        # Reset byte counters
+        # Reset byte counters & global throughput
         for lk in self.link_byte_cnt:
             self.link_byte_cnt[lk] = 0.0
+        self.global_throughput = 0.0
 
         return ret_util, ret_flows
 
@@ -284,7 +288,7 @@ class SimCoreLogging:
         # Calculate an average record
         avg_rec = {}
         for col in self.col_avg_flow_stats:
-            temp            = [ele for ele in col_vecs[col] if (not ele == -1.0)]
+            temp            = [ele for ele in col_vecs[col] if (not ele == float('inf'))]
             avg_rec[col]    = float(sum(temp))/len(temp)
         avg_rec['src_ip'] = 'average'
 
@@ -310,6 +314,7 @@ class SimCoreLogging:
         self.summary_message += ('n_Reject,%d\n'            %(self.n_Reject))
         self.summary_message += ('n_EvFlowEnd,%d\n'         %(self.n_EvFlowEnd))
         self.summary_message += ('n_EvIdleTimeout,%d\n'     %(self.n_EvIdleTimeout))
+        self.summary_message += ('n_rerouted_flows,%d\n'    %(self.n_rerouted_flows))
         self.summary_message += ('exec_time,%.6f\n'         %(self.exec_ed_time - self.exec_st_time))
 
         summary_file.write(self.summary_message)

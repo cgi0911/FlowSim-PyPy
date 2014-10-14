@@ -69,6 +69,7 @@ class SimCoreCalculation:
             bytes_recent = flowobj.update_flow(ev_time)
 
             if (flowobj.status == 'active'):
+                self.global_throughput      += bytes_recent
                 for lk in flowobj.links:
                     # Update link byte counters
                     self.link_byte_cnt[lk]  += bytes_recent

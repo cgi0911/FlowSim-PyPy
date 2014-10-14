@@ -230,7 +230,7 @@ class SimCtrl:
         oab_link = (cap-sub_sum) / (len(tilda_flows)+1)
 
         return oab_link
-            
+
 
     def get_oab_on_path(self, pth):
         """
@@ -250,14 +250,13 @@ class SimCtrl:
     def do_reroute(self, ev_time):
         """
         """
+        if (cfg.ROUTING_MODE == 'spf' or cfg.K_PATH == 1):
+            return
+
         sorted_flows = sorted([fl for fl in self.flowrecs], \
                               key=lambda x: self.flowrecs[x].cnt, reverse=True)
         eleph_flows  = sorted_flows[:cfg.N_ELEPH_FLOWS]
-        #for fl in eleph_flows: print ev_time, fl, self.flowrecs[fl].cnt, self.sim_core.flows[fl].collect_time, \
-        #self.sim_core.flows[fl].status, self.sim_core.flows[fl].curr_rate
-        #print len(eleph_flows)
         new_eleph_flows = [fl for fl in eleph_flows if (not fl in self.old_eleph_flows)]    # already sorted
-        #print len(new_eleph_flows), len(self.old_eleph_flows)
 
         while (len(new_eleph_flows) > 0):
             # Compute max-min fair BW allocation (considering old_eleph_flows only)
@@ -271,21 +270,31 @@ class SimCtrl:
             best_path = self.get_best_reroute_path(path_set)
             # Commit path change of the selected new eleph flow
             flowobj = self.sim_core.flows[fl]
-            print flowobj.path, best_path
             if (not flowobj.path == best_path):
                 old_path        = flowobj.path
                 old_links       = flowobj.links
                 new_path        = best_path
                 new_links       = self.sim_core.get_links_on_path(best_path)
-                # for nd in old_path:     self.sim_core.nodeobjs[nd].remove_flow_entry(fl[0], fl[1])
-                # for lk in old_links:    self.sim_core.linkobjs[lk].remove_flow_entry(fl[0], fl[1])                
-                # flowobj.path    = new_path
-                # flowobj.links   = new_links
-                # for nd in new_path:     self.sim_core.nodeobjs[nd].install_flow_entry(fl[0], fl[1])
-                # for lk in new_links:    self.sim_core.linkobjs[lk].install_flow_entry(fl[0], fl[1], flowobj)
-                # flowobj.reroute += 1
-                # self.flowrecs[fl].path = best_path
-            # Add the selected flow to old_eleph_flows, and remove from new_eleph_flow
+                # Remove flow from old path
+                for lk in old_links:
+                    linkobj = self.sim_core.linkobjs[lk]
+                    linkobj.n_active_flows -= 1
+                    linkobj.remove_flow_entry(fl[0], fl[1])
+                for nd in old_path:
+                    self.sim_core.nodeobjs[nd].remove_flow_entry(fl[0], fl[1])
+                # Install flow to new path
+                self.sim_core.install_entries_to_path(new_path, new_links, fl[0], fl[1])
+                flowobj.path = new_path
+                flowobj.links = new_links
+                for lk in new_links:
+                    linkobj = self.sim_core.linkobjs[lk]
+                    linkobj.n_active_flows += 1
+                # Update controller
+                self.flowrecs[fl].path = new_path
+                # Increment counter
+                flowobj.reroute += 1
+                self.sim_core.n_rerouted_flows += 1
+
             self.old_eleph_flows[fl] = 0.0
 
 
@@ -503,7 +512,7 @@ class SimCtrl:
             objval = 0.0
             for nd in path:
                 usage   =   self.get_table_usage(nd)
-                size    =   self.get_node_attr(nd, 'table_size')
+                size    =   self.noderecs[nd].table_size
                 objval  +=  float(size) / (size - usage)
 
             if (objval < best_objval):
