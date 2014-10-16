@@ -338,10 +338,10 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
             if(cfg.SHOW_PROGRESS > 0):
                 if (self.timer >= next_prog_time):
                     percentage = self.timer * 100.0 / cfg.SIM_TIME
-                    sys.stdout.write("Progress: %-3.2f%%    "           %(percentage)           + \
-                                     "ElapsedTime: %-5.3f seconds    "  %(time()-self.exec_st_time) + \
-                                     "#Flows:%-4d    "                  %(len(self.flows))      + \
-                                     "#ActiveFlows:%-4d    "            %(self.n_active_flows)  + \
+                    sys.stdout.write("Sim Time: %-3.2fs (%-3.2f%%)    " %(self.timer, percentage)   + \
+                                     "Exec Time: %-5.3f seconds    "    %(time()-self.exec_st_time) + \
+                                     "#Flows:%-4d    "                  %(len(self.flows))          + \
+                                     "#ActiveFlows:%-4d    "            %(self.n_active_flows)      + \
                                      "#Rejects:%-6d\r"                  %(self.n_Reject)
                                     )
                     sys.stdout.flush()

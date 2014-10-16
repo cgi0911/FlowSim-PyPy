@@ -9,6 +9,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 from time import *
 import random as rd
+import os
 # Third-party modules
 import networkx as nx
 # User-defined modules
@@ -101,6 +102,9 @@ class SimCtrl:
         self.hosts      = sim_core.hosts        # Pass by assignment
 
         # ---- Build k-path database ----
+        if ( not os.path.exists(cfg.LOG_DIR) ):
+            os.mkdir(cfg.LOG_DIR)
+        self.fn_path_db =   os.path.join(cfg.LOG_DIR, 'path_db.txt')
         self.path_db    = self.setup_path_db()
 
 
@@ -232,6 +236,16 @@ class SimCtrl:
         return oab_link
 
 
+    def get_maxmin_bw_on_link(self, lk):
+        """
+        """
+        lkrec   = self.linkrecs[lk]
+        cap     = lkrec.cap
+        bw      = float(cap) / (len(lkrec.flows) + 1)
+
+        return bw
+
+
     def get_oab_on_path(self, pth):
         """
         """
@@ -240,10 +254,23 @@ class SimCtrl:
         return oab_path
 
 
+    def get_maxmin_bw_on_path(self, pth):
+        """
+        """
+        links = self.sim_core.get_links_on_path(pth)
+        maxmin_bw_path = min([self.get_maxmin_bw_on_link(lk) for lk in links])
+        return maxmin_bw_path
+
+
     def get_best_reroute_path(self, path_set):
         """
         """
-        best_path = max(path_set, key=lambda x: self.get_oab_on_path(x))
+        if (cfg.REROUTE_ALGO == 'oab'):
+            best_path = max(path_set, key=lambda x: self.get_oab_on_path(x))
+        elif (cfg.REROUTE_ALGO == 'greedy'):
+            best_path = max(path_set, key=lambda x: self.get_maxmin_bw_on_path(x))
+        else:
+            best_path = max(path_set, key=lambda x: self.get_maxmin_bw_on_path(x))
         return best_path
 
 
@@ -256,6 +283,8 @@ class SimCtrl:
         sorted_flows = sorted([fl for fl in self.flowrecs], \
                               key=lambda x: self.flowrecs[x].cnt, reverse=True)
         eleph_flows  = sorted_flows[:cfg.N_ELEPH_FLOWS]
+        if (cfg.RESET_ELEPHANT > 0):
+            self.old_eleph_flows = {}
         new_eleph_flows = [fl for fl in eleph_flows if (not fl in self.old_eleph_flows)]    # already sorted
 
         while (len(new_eleph_flows) > 0):
@@ -281,7 +310,9 @@ class SimCtrl:
                     linkobj.n_active_flows -= 1
                     linkobj.remove_flow_entry(fl[0], fl[1])
                 for nd in old_path:
-                    self.sim_core.nodeobjs[nd].remove_flow_entry(fl[0], fl[1])
+                    nodeobj = self.sim_core.nodeobjs[nd]
+                    nodeobj.remove_flow_entry(fl[0], fl[1])
+
                 # Install flow to new path
                 self.sim_core.install_entries_to_path(new_path, new_links, fl[0], fl[1])
                 flowobj.path = new_path
@@ -323,20 +354,47 @@ class SimCtrl:
         for src in sorted(self.topo.nodes()):
             for dst in sorted(self.topo.nodes()):
                 if (not src == dst):
-                    if (cfg.ROUTING_MODE == 'tablelb'):
+                    if (cfg.ROUTING_MODE == 'kpath_fe' or cfg.ROUTING_MODE == 'kpath'):
                         if (cfg.K_PATH_METHOD == 'yen'):
                             path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
                                                                          k=cfg.K_PATH)
                         else:
                             path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
                                                                          k=cfg.K_PATH)
-                    elif (cfg.ROUTING_MODE == 'ecmp'):
+                    elif (cfg.ROUTING_MODE == 'ecmp' or cfg.ROUTING_MODE == 'ecmp_fe'):
                         path_db[(src, dst)] = self.build_pathset_ecmp(src, dst)
                     elif (cfg.ROUTING_MODE == 'spf'):
                         path_db[(src, dst)] = self.build_pathset_spf(src, dst)
                     else:
                         # Default to spf
                         path_db[(src, dst)] = self.build_pathset_spf(src, dst)
+
+        if (cfg.LOG_PATH_DB > 0):
+            fn = self.fn_path_db
+            outfile = open(fn, 'wb')
+
+            for sd_pair in path_db:
+                outfile.write('%s\n' %(str(sd_pair)))
+                paths = path_db[sd_pair]
+                sub_sum = 0.0
+                n_paths = 0
+                shortest_dist = 99999
+                longest_dist = 0
+
+                for pth in paths:
+                    outfile.write('    %s\n' %(str(pth)))
+                    lpth        =   len(pth)
+                    sub_sum     +=  lpth
+                    n_paths     +=  1
+                    if (lpth < shortest_dist):
+                        shortest_dist   = lpth
+                    if (lpth > longest_dist):
+                        longest_dist    = lpth
+                avg_dist = float(sub_sum) / n_paths
+                outfile.write('    Distance of %d paths: shortest=%d  longest=%d  average=%.3f\n' \
+                              %(n_paths, shortest_dist, longest_dist, avg_dist))
+                outfile.write('\n\n')
+
 
         print "Finished building path database"
         return path_db
@@ -466,7 +524,7 @@ class SimCtrl:
         return ret
 
 
-    def find_path_ecmp(self, src_node, dst_node):
+    def find_path_random(self, src_node, dst_node):
         """ECMP routing: randomly choose among several ECMP routes.
 
         Args:
@@ -486,7 +544,7 @@ class SimCtrl:
             return []   # No path available
 
 
-    def find_path_tablelb(self, src_node, dst_node):
+    def find_path_fe(self, src_node, dst_node):
         """Table-aware routing: choose the path which yields lowest
         stdev of table util.
 
@@ -537,11 +595,11 @@ class SimCtrl:
         """
         src_node = self.hosts[src_ip]
         dst_node = self.hosts[dst_ip]
-        if (cfg.ROUTING_MODE == 'ecmp'):
-            path = self.find_path_ecmp(src_node, dst_node)
-        elif (cfg.ROUTING_MODE == 'tablelb'):
-            path = self.find_path_tablelb(src_node, dst_node)
+        if (cfg.ROUTING_MODE == 'ecmp' or cfg.ROUTING_MODE == 'kpath'):
+            path = self.find_path_random(src_node, dst_node)
+        elif (cfg.ROUTING_MODE == 'kpath_fe' or cfg.ROUTING_MODE == 'ecmp_fe'):
+            path = self.find_path_fe(src_node, dst_node)
         else:
-            path = self.find_path_ecmp(src_node, dst_node)
+            path = self.find_path_random(src_node, dst_node)
         return path
 
