@@ -54,9 +54,9 @@ class SimFlowGen:
                     n2      = self.sim_core.nodeobjs[nd_dst].n_hosts
                     wt      = 0.0
                     if (cfg.FLOWGEN_SRCDST_MODEL == 'gravity'):
-                        wt = float(n1 * n2) / float(dist)
+                        wt = float(n1 * n2) / (float(dist)**2)
                     elif(cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
-                        wt = float(dist) / float(n1 * n2)
+                        wt = (float(dist)**2) / float(n1 * n2)
                     total_weight += wt
                     value_list.append(total_weight)
             #row_sum = math.fsum(value_list)
@@ -251,7 +251,13 @@ class SimFlowGen:
         """
         """
         new_ev_time = ev_time + cfg.FLOWGEN_ARR_SATURATE.NEXT_FLOW_DELAY
-        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, src_ip, sim_core)
+        if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, src_ip, sim_core)
+        elif (cfg.FLOWGEN_SRCDST_MODEL == 'gravity' or cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+            new_src_ip, new_dst_ip = self.pick_src_dst_gravity()
+            new_EvFlowArrival = self.gen_new_flow_with_src_dst(new_ev_time, new_src_ip, new_dst_ip, sim_core)
+        else:
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, src_ip, sim_core)   # Default to 'uniform'
         return new_ev_time, new_EvFlowArrival
 
 

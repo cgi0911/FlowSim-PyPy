@@ -57,7 +57,7 @@ class SimCoreLogging:
         self.col_flow_stats =   ['src_ip', 'dst_ip', 'src_node', 'dst_node', 'flow_size', \
                                  'bytes_sent', 'bytes_left', 'avg_rate', 'curr_rate', \
                                  'arrive_time', 'install_time', 'end_time', 'remove_time', \
-                                 'update_time', 'duration', 'status', 'resend', 'reroute']
+                                 'update_time', 'duration', 'status', 'resend', 'reroute', 'hop_count']
         # Column names for those who are going to be averaged and logged
         self.col_avg_link_util  =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median', \
                                     'throughput'] + [str(lk) for lk in self.links]
@@ -65,7 +65,7 @@ class SimCoreLogging:
                                     [str(lk) for lk in self.links]
         self.col_avg_table_util =   ['mean', 'stdev', 'min', 'max', 'q1', 'q3', 'median'] + \
                                     [str(nd) for nd in self.nodes]
-        self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute', 'duration']
+        self.col_avg_flow_stats =   ['flow_size', 'avg_rate', 'resend', 'reroute', 'duration', 'hop_count']
 
         # Record column vectors
         self.col_vec_link_util  = {k: [] for k in self.col_link_util}
@@ -103,17 +103,6 @@ class SimCoreLogging:
         list_usage  = []
         list_util   = []
         list_flows  = []
-
-        # Iterate over all flows, update these flows
-        #for fl in self.flows:
-            #if (not self.flows[fl].status == 'active'):     continue
-
-            #flowobj = self.flows[fl]
-            #est_end_time, bytes_sent = flowobj.update_flow(ev_time)
-            #links_on_path = flowobj.links
-
-            #for lk in links_on_path:
-            #    self.link_byte_cnt[lk] += bytes_sent
 
         # Get link_util and link_flows info
         for lk in self.link_byte_cnt:
@@ -194,7 +183,13 @@ class SimCoreLogging:
         ret = {}
 
         for fld in self.col_flow_stats:
-            ret[fld] = getattr(flow_item, fld)
+            if (fld == 'hop_count'):
+                if (not flow_item.path == []):
+                    ret[fld] = len(flow_item.path) - 1
+                else:
+                    ret[fld] = float('inf')
+            else:
+                ret[fld] = getattr(flow_item, fld)
 
         # Append to column vectors
         for k in ret:   self.col_vec_flow_stats[k].append(ret[k])
@@ -296,7 +291,7 @@ class SimCoreLogging:
         # Write records to CSV writer line by line
         wt.writeheader()
         wt.writerows(recs)
-        wt.writerow({})
+        wt.writerow({})     # Empty row
         wt.writerow(avg_rec)
 
 

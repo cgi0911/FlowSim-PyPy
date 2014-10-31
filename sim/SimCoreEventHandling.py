@@ -33,7 +33,7 @@ class SimCoreEventHandling:
 
         """
         # First update all flow's states
-        self.update_all_flows(ev_time)
+        #self.update_all_flows(ev_time)
 
         self.n_EvFlowArrival += 1      # Increment the counter
 
@@ -86,7 +86,7 @@ class SimCoreEventHandling:
 
         """
         # First update all flow's states
-        self.update_all_flows(ev_time)
+        #self.update_all_flows(ev_time)
 
         self.n_EvPacketIn += 1      # Increment the counter
 
@@ -250,7 +250,7 @@ class SimCoreEventHandling:
 
         """
         # First update all flow's states
-        self.update_all_flows(ev_time)
+        #self.update_all_flows(ev_time)
 
         # Update the timeout flow's states
         fl      = (event.src_ip, event.dst_ip)
