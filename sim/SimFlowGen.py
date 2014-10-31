@@ -8,7 +8,9 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 # Built-in modules
 from heapq import heappush, heappop
 import random as rd
+import math
 # Third-party modules
+import networkx as nx
 import netaddr as na
 # User-defined modules
 import SimConfig as cfg
@@ -24,7 +26,94 @@ class SimFlowGen:
 
     """
     def __init__(self, sim_core):
+        self.sim_core = sim_core
         self.hosts = sim_core.hosts
+        self.nodes = sorted(sim_core.nodes)
+
+        if (cfg.FLOWGEN_SRCDST_MODEL == 'gravity' or \
+            cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+            self.gravity_table, self.src_idx_table = self.build_gravity_table()
+
+
+    def build_gravity_table(self):
+        """For gravity or anti-gravity models, build weights for each src-dst pair.
+        """
+        gravity_table   = []
+        src_idx_table   = []    # For faster lookup. Reduce search complexity from
+                                # O(N^2) to O(2N)
+        total_weight    = 0.0
+
+        for nd_src in self.nodes:
+            value_list = []
+            for nd_dst in self.nodes:
+                if (nd_src == nd_dst):
+                    value_list.append(total_weight)
+                else:
+                    dist    = len(nx.shortest_path(self.sim_core.topo, nd_src, nd_dst)) - 1
+                    n1      = self.sim_core.nodeobjs[nd_src].n_hosts
+                    n2      = self.sim_core.nodeobjs[nd_dst].n_hosts
+                    wt      = 0.0
+                    if (cfg.FLOWGEN_SRCDST_MODEL == 'gravity'):
+                        wt = float(n1 * n2) / float(dist)
+                    elif(cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+                        wt = float(dist) / float(n1 * n2)
+                    total_weight += wt
+                    value_list.append(total_weight)
+            #row_sum = math.fsum(value_list)
+            #total_weight += row_sum
+            gravity_table.append(value_list)
+            src_idx_table.append(total_weight)
+
+        # Normalize the whole table with weight
+        for i in range(len(gravity_table)):
+            for j in range(len(gravity_table[i])):
+                gravity_table[i][j] /= total_weight
+
+        for i in range(len(src_idx_table)):
+            src_idx_table[i] /= total_weight
+
+        return gravity_table, src_idx_table
+
+
+    def pick_src_dst_gravity(self):
+        """Applies both to gravity and anti-gravity models
+        (their only difference is in table weights).
+
+        Args:
+
+        Returns:
+            src_ip (netaddr.IPAddress)
+            dst_ip (netaddr.IPAddress)
+        """
+        while True:
+            rand_num = rd.uniform(0, 1)
+
+            src_idx = 0
+            dst_idx = 0
+
+            for i in range(len(self.src_idx_table)):
+                if (rand_num <= self.src_idx_table[i]):
+                    src_idx = i
+                    break
+
+            for j in range(len(self.gravity_table[src_idx])):
+                if (rand_num <= self.gravity_table[src_idx][j]):
+                    dst_idx = j
+                    break
+
+            nd_src = self.nodes[src_idx]
+            nd_dst = self.nodes[dst_idx]
+
+            # Source and dest node chosen. Get IP addresses.
+            src_ip = na.IPAddress(rd.randint(int(self.sim_core.nodeobjs[nd_src].base_ip),   \
+                                             int(self.sim_core.nodeobjs[nd_src].end_ip) ))
+            dst_ip = na.IPAddress(rd.randint(int(self.sim_core.nodeobjs[nd_dst].base_ip),   \
+                                             int(self.sim_core.nodeobjs[nd_dst].end_ip) ))
+
+            if (not (src_ip, dst_ip) in self.sim_core.flows):
+                break
+
+        return src_ip, dst_ip
 
 
     def pick_dst(self, src_ip, sim_core):
@@ -147,6 +236,17 @@ class SimFlowGen:
         return event
 
 
+    def gen_new_flow_with_src_dst(self, ev_time, src_ip, dst_ip, sim_core):
+        """
+        """
+        # Generate flow size and rate.
+        fsize, frate = self.gen_flow_size_rate()                # Generate flow size
+        # Generate an EvFlowArrival event and return it.
+        event = EvFlowArrival(ev_time=ev_time, src_ip=src_ip, dst_ip=dst_ip, \
+                              flow_size=fsize, flow_rate=frate)
+        return event
+
+
     def gen_new_flow_arr_saturate(self, ev_time, src_ip, sim_core):
         """
         """
@@ -165,10 +265,14 @@ class SimFlowGen:
 
         if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
             new_src_ip  = rd.choice(self.hosts.keys())
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
+        elif (cfg.FLOWGEN_SRCDST_MODEL == 'gravity' or cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+            new_src_ip, new_dst_ip = self.pick_src_dst_gravity()
+            new_EvFlowArrival = self.gen_new_flow_with_src_dst(new_ev_time, new_src_ip, new_dst_ip, sim_core)
         else:
             new_src_ip  = rd.choice(self.hosts.keys()) # Default to 'uniform'
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
 
-        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
         return new_ev_time, new_EvFlowArrival
 
 
@@ -180,10 +284,14 @@ class SimFlowGen:
 
         if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
             new_src_ip  = rd.choice(self.hosts.keys())
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
+        elif (cfg.FLOWGEN_SRCDST_MODEL == 'gravity' or cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+            new_src_ip, new_dst_ip = self.pick_src_dst_gravity()
+            new_EvFlowArrival = self.gen_new_flow_with_src_dst(new_ev_time, new_src_ip, new_dst_ip, sim_core)
         else:
             new_src_ip  = rd.choice(self.hosts.keys()) # Default to 'uniform'
+            new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
 
-        new_EvFlowArrival = self.gen_new_flow_with_src(new_ev_time, new_src_ip, sim_core)
         return new_ev_time, new_EvFlowArrival
 
 
@@ -204,11 +312,16 @@ class SimFlowGen:
                 event   = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
                 heappush(ev_queue, (ev_time, event))
         elif (cfg.FLOWGEN_ARR_MODEL == 'const' or cfg.FLOWGEN_ARR_MODEL == 'exp'):
+            ev_time     = 0.0
             # Generate a single new flow. New flows will be generated upon EvFlowArrival
             if (cfg.FLOWGEN_SRCDST_MODEL == 'uniform'):
                 src_host    = rd.choice(self.hosts.keys())
+                event       = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
+            elif (cfg.FLOWGEN_SRCDST_MODEL == 'gravity' or cfg.FLOWGEN_SRCDST_MODEL == 'antigravity'):
+                src_host, dst_host = self.pick_src_dst_gravity()
+                event = self.gen_new_flow_with_src_dst(ev_time, src_host, dst_host, sim_core)
             else:
                 src_host    = rd.choice(self.hosts.keys())  # Default to 'uniform'
-            ev_time     = 0.0
-            event       = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
+                event       = self.gen_new_flow_with_src(ev_time, src_host, sim_core)
+
             heappush(ev_queue, (ev_time, event))

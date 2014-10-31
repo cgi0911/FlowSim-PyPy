@@ -17,7 +17,7 @@ SIM_TIME    = 120.0
 
 DO_REROUTE  = 1             # Do elephant flow rerouting (please refer to paper draft)
 
-ROUTING_MODE = 'kpath_fe'           # Supported routing modes:
+ROUTING_MODE = 'ecmp'           # Supported routing modes:
                                 # 'kpath_fe': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)
                                 # 'kpath': K-path, random path selection
@@ -90,7 +90,7 @@ N_ELEPH_FLOWS = 50
 # ----------------------------------------
 # Flow Generation Parameters
 # ----------------------------------------
-FLOWGEN_SRCDST_MODEL        = 'uniform'     # Model for flow source and destination
+FLOWGEN_SRCDST_MODEL        = 'antigravity'     # Model for flow source and destination
                                         # "uniform": Randomly pick one dst host that is not
                                         #   within source host's LAN.
 
@@ -135,10 +135,10 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 200.0       # flows/sec
+    FLOW_ARR_RATE = 250.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
 
 class FLOWGEN_ARR_EXP:
-    FLOW_ARR_RATE = 250.0       # flows/sec, a.k.a. lambda
+    FLOW_ARR_RATE = 200.0       # flows/sec, a.k.a. lambda
