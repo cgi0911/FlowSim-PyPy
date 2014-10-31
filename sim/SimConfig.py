@@ -10,7 +10,7 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'k10_fe_reroute'
+EXP_NAME    = 'k4_fe_reroute'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
@@ -24,7 +24,7 @@ ROUTING_MODE = 'kpath_fe'           # Supported routing modes:
                                 # 'ecmp': Equal-cost multi-shortest-path, random path selection
                                 # 'ecmp_fe' Equal-cost multi-shortest-path, table-aware selection
                                 # 'spf': Shortest-path first
-K_PATH = 10                      # Number of predefined path per src-dst pair
+K_PATH = 4                      # Number of predefined path per src-dst pair
 K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
 DO_PROFILING = True             # Do code profiling for this experiment
@@ -101,7 +101,7 @@ FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
 
-FLOWGEN_ARR_MODEL           = 'saturate'    # Flow arrival model
+FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "saturate": Each host will be the source of
                                         #   one and exactly one active flow. A new flow is
                                         #   fired after the previous one comes to an end.
@@ -135,7 +135,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 400.0       # flows/sec
+    FLOW_ARR_RATE = 200.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

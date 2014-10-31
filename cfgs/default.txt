@@ -101,7 +101,7 @@ FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
 
-FLOWGEN_ARR_MODEL           = 'saturate'    # Flow arrival model
+FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "saturate": Each host will be the source of
                                         #   one and exactly one active flow. A new flow is
                                         #   fired after the previous one comes to an end.
@@ -135,7 +135,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 400.0       # flows/sec
+    FLOW_ARR_RATE = 200.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

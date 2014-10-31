@@ -11,10 +11,11 @@ import os
 import csv
 from math import ceil
 # Third-party modules
-import numpy as np
+#import numpy as np
 import pprint as pp
 # User-defined modules
 import SimConfig as cfg
+import SimMath as mth
 
 
 class SimCoreLogging:
@@ -126,22 +127,22 @@ class SimCoreLogging:
         list_flows  = [ret_flows[str(lk)] for lk in self.link_byte_cnt]
 
         # Calculate statistics for link_util
-        ret_util['mean']        = np.mean(list_util)
-        ret_util['stdev']       = np.std(list_util)
-        ret_util['min']         = np.min(list_util)
-        ret_util['max']         = np.max(list_util)
-        ret_util['q1']          = np.percentile(list_util, 25)
-        ret_util['q3']          = np.percentile(list_util, 75)
-        ret_util['median']      = np.percentile(list_util, 50)
+        ret_util['mean']        = mth.mean(list_util)
+        ret_util['stdev']       = mth.std(list_util)
+        ret_util['min']         = min(list_util)
+        ret_util['max']         = max(list_util)
+        ret_util['q1']          = mth.percentile(list_util, 25)
+        ret_util['q3']          = mth.percentile(list_util, 75)
+        ret_util['median']      = mth.percentile(list_util, 50)
         ret_util['throughput']  = self.global_throughput / cfg.PERIOD_LOGGING
         # Calculate statistics for link_flows
-        ret_flows['mean']       = np.mean(list_flows)
-        ret_flows['stdev']      = np.std(list_flows)
-        ret_flows['min']        = np.min(list_flows)
-        ret_flows['max']        = np.max(list_flows)
-        ret_flows['q1']         = np.percentile(list_flows, 25)
-        ret_flows['q3']         = np.percentile(list_flows, 75)
-        ret_flows['median']     = np.percentile(list_flows, 50)
+        ret_flows['mean']       = mth.mean(list_flows)
+        ret_flows['stdev']      = mth.std(list_flows)
+        ret_flows['min']        = min(list_flows)
+        ret_flows['max']        = max(list_flows)
+        ret_flows['q1']         = mth.percentile(list_flows, 25)
+        ret_flows['q3']         = mth.percentile(list_flows, 75)
+        ret_flows['median']     = mth.percentile(list_flows, 50)
 
         # Append to column vectors
         for k in ret_util:  self.col_vec_link_util[k].append(ret_util[k])
@@ -163,7 +164,7 @@ class SimCoreLogging:
             - Time, mean, rmse, min, max, q1, q3, median
             - Table utilization of each node
         """
-        ret = {'time': np.round(ev_time, 3)}
+        ret = {'time': round(ev_time, 3)}
         list_util = []
 
         # Retrieve each node's utilization
@@ -173,13 +174,13 @@ class SimCoreLogging:
             list_util.append(nd_util)
 
         # Calculate statistics
-        ret['mean']     = np.mean(list_util)
-        ret['stdev']    = np.std(list_util)
-        ret['min']      = np.mean(list_util)
-        ret['max']      = np.max(list_util)
-        ret['q1']       = np.percentile(list_util, 25)
-        ret['q3']       = np.percentile(list_util, 75)
-        ret['median']   = np.percentile(list_util, 50)
+        ret['mean']     = mth.mean(list_util)
+        ret['stdev']    = mth.std(list_util)
+        ret['min']      = min(list_util)
+        ret['max']      = max(list_util)
+        ret['q1']       = mth.percentile(list_util, 25)
+        ret['q3']       = mth.percentile(list_util, 75)
+        ret['median']   = mth.percentile(list_util, 50)
 
         # Append to column vectors
         for k in ret:   self.col_vec_table_util[k].append(ret[k])
