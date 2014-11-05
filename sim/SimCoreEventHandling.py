@@ -201,7 +201,7 @@ class SimCoreEventHandling:
         Return:
             None. Will schedule events to self.ev_queue if necessary.
 
-        """
+        """        
         # First update all flow's states
         self.update_all_flows(ev_time)
 
@@ -233,6 +233,9 @@ class SimCoreEventHandling:
             new_ev_time, new_EvFlowArrival = self.flowgen.gen_new_flow_arr_saturate(    \
                                              ev_time, event.src_ip, self)
             heappush(self.ev_queue, (new_ev_time, new_EvFlowArrival))
+
+        # Increment flowend counter
+        self.n_ended_flows += 1
 
 
     def handle_EvIdleTimeout(self, ev_time, event):

@@ -6,7 +6,7 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # Built-in modules
-#from time import *
+from time import *
 #import random as rd
 #import os
 # Third-party modules
@@ -43,20 +43,19 @@ class SimCtrlPathDB:
         for src in sorted(self.topo.nodes()):
             for dst in sorted(self.topo.nodes()):
                 if (not src == dst):
-                    if (cfg.ROUTING_MODE == 'kpath_fe' or cfg.ROUTING_MODE == 'kpath'):
-                        if (cfg.K_PATH_METHOD == 'yen'):
-                            path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
-                                                                         k=cfg.K_PATH)
-                        else:
-                            path_db[(src, dst)] = self.build_pathset_yen(src, dst, \
-                                                                         k=cfg.K_PATH)
-                    elif (cfg.ROUTING_MODE == 'ecmp' or cfg.ROUTING_MODE == 'ecmp_fe'):
-                        path_db[(src, dst)] = self.build_pathset_ecmp(src, dst)
-                    elif (cfg.ROUTING_MODE == 'spf'):
-                        path_db[(src, dst)] = self.build_pathset_spf(src, dst)
+                    if (cfg.PATHDB_MODE == 'all_shortest'):
+                        path_db[(src, dst)] = self.build_pathdb_all_shortest(src, dst)
+                    elif (cfg.PATHDB_MODE == 'kpath_yen'):
+                        path_db[(src, dst)] = self.build_pathdb_kpath_yen(src, dst, k=cfg.K_PATH)
+                    elif (cfg.PATHDB_MODE == 'one_shortest'):
+                        path_db[(src, dst)] = self.build_pathdb_one_shortest(src, dst)
                     else:
-                        # Default to spf
-                        path_db[(src, dst)] = self.build_pathset_spf(src, dst)
+                        path_db[(src, dst)] = self.build_pathdb_all_shortest(src, dst)  # default to all_shortest
+        self.path_db = path_db
+
+        # Build ECMP database if needed
+        if (cfg.ROUTING_MODE == 'ecmp'):
+            self.build_ecmp_db()
 
         # Logging the path database to file.
         if (cfg.LOG_PATH_DB > 0):
@@ -64,33 +63,30 @@ class SimCtrlPathDB:
             outfile = open(fn, 'wb')
 
             for sd_pair in path_db:
-                outfile.write('%s\n' %(str(sd_pair)))
-                paths = path_db[sd_pair]
+                pathset = path_db[sd_pair]
                 sub_sum = 0.0
                 n_paths = 0
                 shortest_dist = 99999
                 longest_dist = 0
 
-                for pth in paths:
-                    outfile.write('    %s\n' %(str(pth)))
-                    lpth        =   len(pth)
-                    sub_sum     +=  lpth
-                    n_paths     +=  1
-                    if (lpth < shortest_dist):
-                        shortest_dist   = lpth
-                    if (lpth > longest_dist):
-                        longest_dist    = lpth
-                avg_dist = float(sub_sum) / n_paths
+                outfile.write('%s\n' %(str(sd_pair)))
+                for pth in pathset:   outfile.write('    %s\n' %(str(pth)))
+                
+                n_paths         = len(pathset)
+                avg_dist        = sum(len(pth) for pth in pathset) / float(n_paths)
+                longest_dist    = max([len(pth)-1 for pth in pathset])
+                shortest_dist   = min([len(pth)-1 for pth in pathset])
+
                 outfile.write('    Distance of %d paths: shortest=%d  longest=%d  average=%.3f\n' \
                               %(n_paths, shortest_dist, longest_dist, avg_dist))
                 outfile.write('\n\n')
 
 
         print "Finished building path database"
-        return path_db
+        
 
 
-    def build_pathset_yen(self, src, dst, k=cfg.K_PATH):
+    def build_pathdb_kpath_yen(self, src, dst, k=cfg.K_PATH):
         """Yen's algorithm for building k-path.
         Please refer to Yen's paper.
 
@@ -157,7 +153,7 @@ class SimCtrlPathDB:
         return confirmed_paths
 
 
-    def build_pathset_ecmp(self, src, dst):
+    def build_pathdb_all_shortest(self, src, dst):
         """Find all lowest equal-cost paths from src to dst. The cost is hop count.
 
         Args:
@@ -174,7 +170,7 @@ class SimCtrlPathDB:
         return ret
 
 
-    def build_pathset_spf(self, src, dst):
+    def build_pathdb_one_shortest(self, src, dst):
         """Find a shortest path from src to dst.
 
         Args:
@@ -185,5 +181,25 @@ class SimCtrlPathDB:
             list: list with only one element - shortest path from src to dst.
                   Each path is represented by a list of node names.
         """
-        path = nx.shortest_path(self.topo, src, dst)
-        return [path]
+        path = list(nx.shortest_path(self.topo, src, dst))
+        return path
+
+
+    def build_ecmp_db(self):
+        """
+        """
+        ecmp_db = {}
+        for src, dst in self.path_db:
+            if (not (src, dst) in ecmp_db):
+                ecmp_db[(src, dst)] = {}
+            for pth in self.path_db[(src, dst)]:
+                for i in range(len(pth)-1):
+                    nd = pth[i]
+                    next_hop = pth[i+1]
+                    if (not nd in ecmp_db[(src, dst)]):
+                        ecmp_db[(src, dst)][nd] = [next_hop]
+                    else:
+                        ecmp_db[(src, dst)][nd].append(next_hop)
+
+        self.ecmp_db = ecmp_db
+

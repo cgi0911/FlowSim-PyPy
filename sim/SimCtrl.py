@@ -102,11 +102,11 @@ class SimCtrl(SimCtrlPathDB):
         # ---- Hosts database ----
         self.hosts      = sim_core.hosts        # Pass by assignment
 
-        # ---- Build k-path database ----
+        # ---- Build path database ----
         if ( not os.path.exists(cfg.LOG_DIR) ):
             os.mkdir(cfg.LOG_DIR)
-        self.fn_path_db =   os.path.join(cfg.LOG_DIR, 'path_db.txt')
-        self.path_db    = self.setup_path_db()
+        self.fn_path_db = os.path.join(cfg.LOG_DIR, 'path_db.txt')  # Log file for path DB
+        self.setup_path_db()  # Set up path DB
 
 
     def __str__(self):
@@ -410,6 +410,21 @@ class SimCtrl(SimCtrlPathDB):
         return best_path    # Will return [] is no path available
 
 
+    def find_path_ecmp(self, src_node, dst_node):
+        """
+        """
+        nd  = src_node
+        path = []
+        while True:            
+            path.append(nd)
+            if (nd == dst_node):
+                break
+            else:
+                nd = rd.choice(self.ecmp_db[(src_node, dst_node)][nd])
+        
+        return path
+
+
     def find_path(self, src_ip, dst_ip):
         """Given src and dst IPs, find a feasible path in between.
         1. Path is selected according to routing mode.
@@ -426,11 +441,13 @@ class SimCtrl(SimCtrlPathDB):
         """
         src_node = self.hosts[src_ip]
         dst_node = self.hosts[dst_ip]
-        if (cfg.ROUTING_MODE == 'ecmp' or cfg.ROUTING_MODE == 'kpath'):
+        if (cfg.ROUTING_MODE == 'ecmp'):
+            path = self.find_path_ecmp(src_node, dst_node)
+        elif (cfg.ROUTING_MODE == 'random'):
             path = self.find_path_random(src_node, dst_node)
-        elif (cfg.ROUTING_MODE == 'kpath_fe' or cfg.ROUTING_MODE == 'ecmp_fe'):
+        elif (cfg.ROUTING_MODE == 'fe'):
             path = self.find_path_fe(src_node, dst_node)
         else:
-            path = self.find_path_random(src_node, dst_node)
+            path = self.find_path_random(src_node, dst_node)    # default to 'random'
         return path
 

@@ -89,6 +89,7 @@ class SimCoreLogging:
         self.n_Reject = 0
         self.n_active_flows = 0
         self.n_rerouted_flows = 0
+        self.n_ended_flows = 0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
         # Register CSV dialect

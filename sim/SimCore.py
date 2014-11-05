@@ -83,10 +83,6 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
         self.create_hosts()
 
         # ---- Simulator components ----
-        # SimController: Currently assume one omniscient controller
-        # SimFlowGen: One instance
-        # SimSwitch instances are instantiated in df_to_topo
-        # SimLink instances are instantitated in df_to_topo
         self.ctrl = SimCtrl(self)
         self.flowgen = SimFlowGen(self)
 
@@ -342,6 +338,7 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
                                      "Exec Time: %-5.3f seconds    "    %(time()-self.exec_st_time) + \
                                      "#Flows:%-4d    "                  %(len(self.flows))          + \
                                      "#ActiveFlows:%-4d    "            %(self.n_active_flows)      + \
+                                     "#FlowEnds:%-6d    "               %(self.n_ended_flows)       + \
                                      "#Rejects:%-6d\r"                  %(self.n_Reject)
                                     )
                     sys.stdout.flush()
