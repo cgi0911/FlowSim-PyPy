@@ -17,6 +17,10 @@ SIM_TIME    = 120.0
 
 DO_REROUTE  = 0             # Do elephant flow rerouting (please refer to paper draft)
 
+PATHDB_MODE = 'allshortest'     # Supported path database modes:
+                                # 'all_shortest':
+                                # 'k_path':
+                                # 'one_shortest':
 ROUTING_MODE = 'ecmp'           # Supported routing modes:
                                 # 'kpath_fe': Table load-balancing routing using k-path
                                 #               (default to Yen's k-path algorithm)

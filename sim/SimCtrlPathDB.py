@@ -58,6 +58,7 @@ class SimCtrlPathDB:
                         # Default to spf
                         path_db[(src, dst)] = self.build_pathset_spf(src, dst)
 
+        # Logging the path database to file.
         if (cfg.LOG_PATH_DB > 0):
             fn = self.fn_path_db
             outfile = open(fn, 'wb')
