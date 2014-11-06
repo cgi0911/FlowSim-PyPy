@@ -420,7 +420,10 @@ class SimCtrl(SimCtrlPathDB):
             if (nd == dst_node):
                 break
             else:
-                nd = rd.choice(self.ecmp_db[(src_node, dst_node)][nd])
+                while True:
+                    nd = rd.choice(self.ecmp_db[(src_node, dst_node)][nd])
+                    if (not nd in path):
+                        break
         
         return path
 
@@ -441,7 +444,10 @@ class SimCtrl(SimCtrlPathDB):
         """
         src_node = self.hosts[src_ip]
         dst_node = self.hosts[dst_ip]
-        if (cfg.ROUTING_MODE == 'ecmp'):
+
+        if (cfg.PATHDB_MODE == 'one_shortest'):
+            path = self.path_db[(src_node, dst_node)][0]
+        elif (cfg.ROUTING_MODE == 'ecmp'):
             path = self.find_path_ecmp(src_node, dst_node)
         elif (cfg.ROUTING_MODE == 'random'):
             path = self.find_path_random(src_node, dst_node)

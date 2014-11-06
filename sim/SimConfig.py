@@ -10,12 +10,12 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'default4'
+EXP_NAME    = 'all_ec_reroute'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 120.0
+SIM_TIME    = 60.0
 
-DO_REROUTE  = 0             # Do elephant flow rerouting (please refer to paper draft)
+DO_REROUTE  =  1           # Do elephant flow rerouting (please refer to paper draft)
 
 PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
@@ -78,20 +78,20 @@ CTRL_SW_DELAY = 0.005           # Controller-to-switch delay
 IDLE_TIMEOUT = 0.000            # Idle timeout
 REJECT_TIMEOUT = 0.300          # Timeout for flow re-request if rejected due to overflow
 
-PERIOD_REROUTE = 2.500          # Period of rerouting
+PERIOD_REROUTE = 1.000          # Period of rerouting
 PERIOD_COLLECT = 0.500          # Period of counter collection
 
 # ----------------------------------------
 # Reroute-related Parameters
 # ----------------------------------------
-RESET_ELEPHANT = 1
+RESET_ELEPHANT = 0
 REROUTE_ALGO = 'greedy'
-N_ELEPH_FLOWS = 10
+N_ELEPH_FLOWS = 20
 
 # ----------------------------------------
 # Flow Generation Parameters
 # ----------------------------------------
-FLOWGEN_SRCDST_MODEL        = 'gravity'     # Model for flow source and destination
+FLOWGEN_SRCDST_MODEL        = 'uniform'     # Model for flow source and destination
                                         # "uniform": Randomly pick one dst host that is not
                                         #   within source host's LAN.
 
@@ -136,7 +136,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 200.0       # flows/sec
+    FLOW_ARR_RATE = 300.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

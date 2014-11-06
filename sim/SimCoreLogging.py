@@ -90,6 +90,11 @@ class SimCoreLogging:
         self.n_active_flows = 0
         self.n_rerouted_flows = 0
         self.n_ended_flows = 0
+        self.avg_throughput = 0.0
+        self.avg_link_util = 0.0
+        self.avg_table_util = 0.0
+        self.std_link_util = 0.0
+        self.std_table_util = 0.0
         self.exec_st_time = self.exec_ed_time = self.exec_time = 0.0
 
         # Register CSV dialect
@@ -215,6 +220,10 @@ class SimCoreLogging:
             avg_rec[col]    = float(sum(temp))/len(temp)
         avg_rec['time'] = 'average'
 
+        self.avg_throughput = avg_rec['throughput']
+        self.avg_link_util = avg_rec['mean']
+        self.std_link_util = avg_rec['stdev']
+
         # Write records to CSV writer line by line
         wt.writeheader()
         wt.writerows(recs)
@@ -261,6 +270,9 @@ class SimCoreLogging:
             temp            = col_vecs[col][pos:]
             avg_rec[col]    = float(sum(temp))/len(temp)
         avg_rec['time'] = 'average'
+
+        self.avg_table_util = avg_rec['mean']
+        self.std_table_util = avg_rec['stdev']
 
         # Write records to CSV writer line by line
         wt.writeheader()
@@ -312,6 +324,11 @@ class SimCoreLogging:
         self.summary_message += ('n_EvFlowEnd,%d\n'         %(self.n_EvFlowEnd))
         self.summary_message += ('n_EvIdleTimeout,%d\n'     %(self.n_EvIdleTimeout))
         self.summary_message += ('n_rerouted_flows,%d\n'    %(self.n_rerouted_flows))
+        self.summary_message += ('avg_throughput,%e\n'      %(self.avg_throughput))
+        self.summary_message += ('avg_link_util,%.6f\n'     %(self.avg_link_util))
+        self.summary_message += ('std_link_util,%.6f\n'     %(self.std_link_util))
+        self.summary_message += ('avg_table_util,%.6f\n'    %(self.avg_table_util))
+        self.summary_message += ('std_table_util,%.6f\n'    %(self.std_table_util))
         self.summary_message += ('exec_time,%.6f\n'         %(self.exec_ed_time - self.exec_st_time))
 
         summary_file.write(self.summary_message)

@@ -181,8 +181,10 @@ class SimCtrlPathDB:
             list: list with only one element - shortest path from src to dst.
                   Each path is represented by a list of node names.
         """
-        path = list(nx.shortest_path(self.topo, src, dst))
-        return path
+        ret  = []
+        path = nx.shortest_path(self.topo, src, dst)
+        ret.append(path)
+        return ret
 
 
     def build_ecmp_db(self):
