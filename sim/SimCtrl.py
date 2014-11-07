@@ -405,6 +405,7 @@ class SimCtrl(SimCtrlPathDB):
                 objval  +=  float(size) / (size - usage)
 
             if (objval < best_objval):
+                best_objval = objval
                 best_path = path
 
         return best_path    # Will return [] is no path available

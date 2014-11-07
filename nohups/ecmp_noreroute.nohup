@@ -1,7 +1,0 @@
-Reading config from: ./cfgs/ecmp_noreroute.txt
-Building path database for all src-dst node pairs.
-Finished building path database
-Code performance profiling output to ./logs/k8_noreroute/profile_pstats.pstats
-Logging to folder: ./logs/k8_noreroute
-Start simulation. Experiment name: k8_noreroute
-Sim Time: 0.00s (0.00%)    Exec Time: 0.000 seconds    #Flows:0       #ActiveFlows:0       #Rejects:0     Sim Time: 0.10s (0.08%)    Exec Time: 0.000 seconds    #Flows:1       #ActiveFlows:0       #Rejects:0     Sim Time: 1.20s (1.00%)    Exec Time: 0.924 seconds    #Flows:58      #ActiveFlows:54      #Rejects:0     Sim Time: 1.20s (1.00%)    Exec Time: 0.924 seconds    #Flows:58      #ActiveFlows:53      #Rejects:0     Sim Time: 1.20s (1.00%)    Exec Time: 0.924 seconds    #Flows:57      #ActiveFlows:53      #Rejects:0     Sim Time: 1.20s (1.00%)    Exec Time: 0.925 seconds    #Flows:57      #ActiveFlows:53      #Rejects:0     Sim Time: 1.20s (1.00%)    Exec Time: 0.928 seconds    #Flows:57      #ActiveFlows:53      #Rejects:0     Sim Time: 2.40s (2.00%)    Exec Time: 1.877 seconds    #Flows:84      #ActiveFlows:80      #Rejects:0     

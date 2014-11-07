@@ -10,23 +10,23 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'all_ec_reroute'
+EXP_NAME    = 'all_rd_nr_200fps'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 60.0
+SIM_TIME    = 120.0
 
-DO_REROUTE  =  1           # Do elephant flow rerouting (please refer to paper draft)
+DO_REROUTE  =  0           # Do elephant flow rerouting (please refer to paper draft)
 
 PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
                                     # 'kpath_yen': Build k-path between each src-dst pair, using Yen's algorithm
                                     # 'one_shortest': List one shortest path between each src-dst pair
-ROUTING_MODE    = 'ecmp'        # Supported routing modes:
+ROUTING_MODE    = 'random'        # Supported routing modes:
                                 # 'ecmp':   Equal-cost multi-shortest-path, per-flow
                                 # 'random'  Randomly pick a feasible path
                                 # 'fe':     Consider flow table balance
 K_PATH = 4                      # Number of predefined path per src-dst pair
-K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
+#K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
 DO_PROFILING = True             # Do code profiling for this experiment
 
@@ -34,7 +34,7 @@ DO_PROFILING = True             # Do code profiling for this experiment
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 200
+TABLESIZE_PER_SW = 100
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
@@ -102,14 +102,14 @@ FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
 
-FLOWGEN_ARR_MODEL           = 'saturate'    # Flow arrival model
+FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "saturate": Each host will be the source of
                                         #   one and exactly one active flow. A new flow is
                                         #   fired after the previous one comes to an end.
                                         # "const": Flow arrival rate is a specified constant.
                                         # "exp": Flow inter-arrival time is exponentially distributed
 
-SRC_LIMITED                 = 0          # If 1, flow rates are limited by its source rate.
+SRC_LIMITED                 = 1          # If 1, flow rates are limited by its source rate.
                                         # If 0, flow can transmit as fast as possible subject to
                                         #   link capacity constraints and max-min fairness.
 
@@ -122,10 +122,10 @@ class FLOWGEN_SIZERATE_UNIFORM:
 
 class FLOWGEN_SIZERATE_BIMODAL:
     PROB_LARGE_FLOW = 0.1
-    FLOW_SIZE_LARGE_LO = 3.0e9
-    FLOW_SIZE_LARGE_HI = 3.0e9
-    FLOW_RATE_LARGE_LO = 10.0e9
-    FLOW_RATE_LARGE_HI = 10.0e9
+    FLOW_SIZE_LARGE_LO = 1.0e9
+    FLOW_SIZE_LARGE_HI = 1.0e9
+    FLOW_RATE_LARGE_LO = 1.0e8
+    FLOW_RATE_LARGE_HI = 1.0e8
     FLOW_SIZE_SMALL_LO = 1.0e7
     FLOW_SIZE_SMALL_HI = 1.0e7
     FLOW_RATE_SMALL_LO = 1.0e7
@@ -136,7 +136,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 300.0       # flows/sec
+    FLOW_ARR_RATE = 200.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

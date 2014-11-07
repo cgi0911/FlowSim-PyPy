@@ -313,10 +313,11 @@ class SimCoreLogging:
         """
         summary_file = open(self.fn_summary, 'w')
 
-        self.summary_message += ('ROUTING_MODE,%s\n'        %(cfg.ROUTING_MODE))
-        if (cfg.ROUTING_MODE == 'tablelb'):
+        self.summary_message += ('PATHDB_MODE,%s\n'         %(cfg.PATHDB_MODE))
+        if (cfg.ROUTING_MODE == 'kpath_yen'):
             self.summary_message += ('    K_PATH,%s\n'          %(cfg.K_PATH))
-            self.summary_message += ('    K_PATH_METHOD,%s\n'   %(cfg.K_PATH_METHOD))
+            #self.summary_message += ('    K_PATH_METHOD,%s\n'   %(cfg.K_PATH_METHOD))
+        self.summary_message += ('ROUTING_MODE,%s\n'        %(cfg.ROUTING_MODE))        
         self.summary_message += ('DO_REROUTE,%s\n'          %(cfg.DO_REROUTE))
         self.summary_message += ('n_EvFlowArrival,%d\n'     %(self.n_EvFlowArrival))
         self.summary_message += ('n_EvPacketIn,%d\n'        %(self.n_EvPacketIn))
