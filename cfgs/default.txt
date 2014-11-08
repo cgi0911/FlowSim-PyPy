@@ -10,25 +10,25 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'all_rd_nr_200fps'
+EXP_NAME    = 'one_spf_nr_750fps_unlmt'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
 
 DO_REROUTE  =  0           # Do elephant flow rerouting (please refer to paper draft)
 
-PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
+PATHDB_MODE     = 'one_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
                                     # 'kpath_yen': Build k-path between each src-dst pair, using Yen's algorithm
                                     # 'one_shortest': List one shortest path between each src-dst pair
-ROUTING_MODE    = 'random'        # Supported routing modes:
+ROUTING_MODE    = 'fe'        # Supported routing modes:
                                 # 'ecmp':   Equal-cost multi-shortest-path, per-flow
                                 # 'random'  Randomly pick a feasible path
                                 # 'fe':     Consider flow table balance
 K_PATH = 4                      # Number of predefined path per src-dst pair
 #K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-DO_PROFILING = True             # Do code profiling for this experiment
+DO_PROFILING = False             # Do code profiling for this experiment
 
 # ---------------------------------------
 # Switch/link Initialization Parameters
@@ -61,7 +61,7 @@ SHOW_SUMMARY = 1
 LOG_CONFIG = 1
 LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL = 1
-LOG_FLOW_STATS = 1
+LOG_FLOW_STATS = 0
 LOG_SUMMARY = 1
 LOG_PATH_DB = 1
 IGNORE_HEAD = 0.3               # Ignore head (portion) rows when doing average
@@ -109,7 +109,7 @@ FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "const": Flow arrival rate is a specified constant.
                                         # "exp": Flow inter-arrival time is exponentially distributed
 
-SRC_LIMITED                 = 1          # If 1, flow rates are limited by its source rate.
+SRC_LIMITED                 = 0          # If 1, flow rates are limited by its source rate.
                                         # If 0, flow can transmit as fast as possible subject to
                                         #   link capacity constraints and max-min fairness.
 
@@ -136,7 +136,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 200.0       # flows/sec
+    FLOW_ARR_RATE = 750.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
