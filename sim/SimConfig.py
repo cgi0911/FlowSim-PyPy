@@ -10,14 +10,14 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'one_spf_nr_850fps_unlmt'
+EXP_NAME    = 'all_fe_nr_800fps_unlmt'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
 
 DO_REROUTE  =  0           # Do elephant flow rerouting (please refer to paper draft)
 
-PATHDB_MODE     = 'one_shortest'    # Supported Path DB building modes:
+PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
                                     # 'kpath_yen': Build k-path between each src-dst pair, using Yen's algorithm
                                     # 'one_shortest': List one shortest path between each src-dst pair
@@ -137,7 +137,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 850.0       # flows/sec
+    FLOW_ARR_RATE = 800.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
