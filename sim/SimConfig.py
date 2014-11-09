@@ -10,7 +10,7 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'one_spf_nr_750fps_unlmt'
+EXP_NAME    = 'one_spf_nr_850fps_unlmt'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
@@ -84,6 +84,7 @@ PERIOD_COLLECT = 0.500          # Period of counter collection
 # ----------------------------------------
 # Reroute-related Parameters
 # ----------------------------------------
+MAX_RETRY = 3                   # Number of retries when a packet_in is rejected
 RESET_ELEPHANT = 0
 REROUTE_ALGO = 'greedy'
 N_ELEPH_FLOWS = 20
@@ -136,7 +137,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 750.0       # flows/sec
+    FLOW_ARR_RATE = 850.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]

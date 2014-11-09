@@ -94,6 +94,7 @@ class SimCoreEventHandling:
         path = self.ctrl.find_path(event.src_ip, event.dst_ip)
 
         # Case 1: No feasible path. Reject the flow and resend EvPacketIn
+        fl = (event.src_ip, event.dst_ip)
         if (path == []):
 
             if (cfg.SHOW_REJECTS > 0):
@@ -102,15 +103,21 @@ class SimCoreEventHandling:
                 print
 
             # Re-send this EvPacketIn after REJECT_TIMEOUT (don't forget SW_CTRL_DELAY!)
-            new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
-            new_event   = EvPacketIn(   ev_time=new_ev_time, \
-                                        src_ip=event.src_ip, dst_ip=event.dst_ip,
-                                        src_node=event.src_node, dst_node=event.dst_node)
-            heappush(self.ev_queue, (new_ev_time, new_event))
+            if (self.flows[fl].resend < cfg.MAX_RETRY
+                or cfg.FLOWGEN_ARR_MODEL == 'saturate'):
+                new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
+                new_event   = EvPacketIn(   ev_time=new_ev_time, \
+                                            src_ip=event.src_ip, dst_ip=event.dst_ip,
+                                            src_node=event.src_node, dst_node=event.dst_node)
+                heappush(self.ev_queue, (new_ev_time, new_event))
 
-            # Increment resend counters
-            self.flows[(event.src_ip, event.dst_ip)].resend += 1
-            self.n_Reject += 1
+                # Increment resend counters
+                self.flows[fl].resend += 1
+                self.n_Reject += 1
+
+            # Else simply ignore the packet_in, delete flow
+            else:
+                del self.flows[fl]
 
         else:
             # Schedule a EvFlowInstall event
@@ -175,15 +182,21 @@ class SimCoreEventHandling:
                 print 'Flow %s is rejected. Overflow detected during installation' %(fl)
 
             # Re-schedule a new EvPacketIn event after REJECT_TIMEOUT
-            new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
-            new_event   = EvPacketIn( ev_time=new_ev_time, \
-                                      src_ip=event.src_ip, dst_ip=event.dst_ip, \
-                                      src_node=event.src_node, dst_node=event.dst_node)
-            heappush(self.ev_queue, (new_ev_time, new_event))
+            if (self.flows[fl].resend < cfg.MAX_RETRY
+                or cfg.FLOWGEN_ARR_MODEL == 'saturate'):
+                new_ev_time = ev_time + cfg.REJECT_TIMEOUT + cfg.SW_CTRL_DELAY
+                new_event   = EvPacketIn( ev_time=new_ev_time, \
+                                          src_ip=event.src_ip, dst_ip=event.dst_ip, \
+                                          src_node=event.src_node, dst_node=event.dst_node)
+                heappush(self.ev_queue, (new_ev_time, new_event))
 
-            # Increment resend counters
-            self.flows[fl].resend   += 1
-            self.n_Reject           += 1
+                # Increment resend counters
+                self.flows[fl].resend   += 1
+                self.n_Reject           += 1
+
+            # else simply ignore
+            else:
+                del self.flows[fl]
 
 
     def handle_EvFlowEnd(self, ev_time, event):
@@ -201,7 +214,7 @@ class SimCoreEventHandling:
         Return:
             None. Will schedule events to self.ev_queue if necessary.
 
-        """        
+        """
         # First update all flow's states
         self.update_all_flows(ev_time)
 
