@@ -10,7 +10,7 @@ import os
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'all_fe_nr_100fps_unlmt'
+EXP_NAME    = 'all_rd_nr_850fps_unlmt'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
 SIM_TIME    = 120.0
@@ -21,7 +21,7 @@ PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
                                     # 'kpath_yen': Build k-path between each src-dst pair, using Yen's algorithm
                                     # 'one_shortest': List one shortest path between each src-dst pair
-ROUTING_MODE    = 'fe'        # Supported routing modes:
+ROUTING_MODE    = 'random'        # Supported routing modes:
                                 # 'ecmp':   Equal-cost multi-shortest-path, per-flow
                                 # 'random'  Randomly pick a feasible path
                                 # 'fe':     Consider flow table balance
@@ -45,7 +45,7 @@ CAP_UNIT     = 1.0e9    # Gbps
 # ----------------------------------------
 # Screen Printing Options
 # ----------------------------------------
-SHOW_PROGRESS = 0
+SHOW_PROGRESS = 1
 SHOW_EVENTS = 0
 SHOW_REJECTS = 0
 SHOW_K_PATH_CONSTRUCTION = 0
@@ -137,7 +137,7 @@ class FLOWGEN_ARR_SATURATE:
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 100.0       # flows/sec
+    FLOW_ARR_RATE = 850.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
