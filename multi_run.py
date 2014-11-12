@@ -11,13 +11,13 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 import os
 import multiprocessing as mp
 
-N_WORKERS = 1
-INTERPRETER = 'pypy'
+N_WORKERS = 2
+INTERPRETER = '~/Links/pypy'
 # TASKS = ['./cfgs/ecmp.txt', './cfgs/spf.txt', './cfgs/fe2.txt',\
 #          './cfgs/fe3.txt', './cfgs/fe4.txt', './cfgs/fe5.txt',\
 #          './cfgs/fe6.txt', './cfgs/fe7.txt', './cfgs/fe8.txt',\
 #          './cfgs/fe9.txt', './cfgs/fe10.txt']
-TASKS = ['./cfgs/k10_noreroute.txt', './cfgs/k10_reroute.txt', './cfgs/k10_fe_noreroute.txt', './cfgs/k10_fe_reroute.txt']
+TASKS = ['./cfgs/200fps.txt', './cfgs/100fps.txt']
 NOHUP_PATH = './nohups'
 
 def do_work(task_queue):

@@ -335,10 +335,10 @@ class SimCoreLogging:
         summary_file.write(self.summary_message)
 
 
-    def dump_config(self):
-        """
-        """
-        os.system("cp ./sim/SimConfig.py %s" %(self.fn_config))
+    # def dump_config(self):
+    #     """
+    #     """
+    #     os.system("cp ./sim/SimConfig.py %s" %(self.fn_config))
 
 
     def show_summary(self):
