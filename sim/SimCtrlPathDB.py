@@ -7,6 +7,7 @@ __copyright__   = 'Copyright 2014, NYU-Poly'
 
 # Built-in modules
 from time import *
+import sys
 #import random as rd
 #import os
 # Third-party modules
@@ -71,7 +72,7 @@ class SimCtrlPathDB:
 
                 outfile.write('%s\n' %(str(sd_pair)))
                 for pth in pathset:   outfile.write('    %s\n' %(str(pth)))
-                
+
                 n_paths         = len(pathset)
                 avg_dist        = sum(len(pth) for pth in pathset) / float(n_paths)
                 longest_dist    = max([len(pth)-1 for pth in pathset])
@@ -83,7 +84,7 @@ class SimCtrlPathDB:
 
 
         print "Finished building path database"
-        
+
 
 
     def build_pathdb_kpath_yen(self, src, dst, k=cfg.K_PATH):
@@ -100,6 +101,11 @@ class SimCtrlPathDB:
                   Each path is represented by a list of node names.
         """
         st_time = time()
+
+        if (cfg.K_PATH < 0):
+            print "Yen's algorithm: wrong value of K_PATH"
+            sys.exit(1)
+
 
         if (cfg.SHOW_K_PATH_CONSTRUCTION > 0):
             print "Finding %d paths from %s to %s" %(k, src, dst)
@@ -166,7 +172,10 @@ class SimCtrlPathDB:
         """
         ret = []
         for path in nx.all_shortest_paths(self.topo, src, dst):
+            if (not cfg.K_PATH < 0) and len(ret) == cfg.K_PATH:
+                break
             ret.append(path)
+        #print "(%4s, %4s): %-10d" %(src, dst, len(ret))
         return ret
 
 

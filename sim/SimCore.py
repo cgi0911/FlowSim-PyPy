@@ -329,7 +329,11 @@ class SimCore(SimCoreCalculation, SimCoreEventHandling, SimCoreLogging):
 
         next_prog_time = 0.0
 
-        while (self.timer <= self.sim_time):
+        #while (self.timer <= self.sim_time):
+        while True:
+            if (self.timer > self.sim_time):
+                break
+
             # Show progress
             if(cfg.SHOW_PROGRESS > 0):
                 if (self.timer >= next_prog_time):

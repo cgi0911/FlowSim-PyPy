@@ -411,12 +411,42 @@ class SimCtrl(SimCtrlPathDB):
         return best_path    # Will return [] is no path available
 
 
+    def find_path_bw(self, src_node, dst_node):
+        """
+        """
+        # First check for feasibility of path. Make sure no overflow.
+        feasible_paths = [path for path in self.path_db[(src_node, dst_node)] \
+                          if ( self.is_feasible(path) == True )]
+
+        if (len(feasible_paths) == 1):
+            return feasible_paths[0]
+
+        # Find the best table LB path
+        best_bw     = 0.0
+        best_path       = []
+
+        for path in feasible_paths:
+            btnk_bw = float('inf')
+            for lk in self.sim_core.get_links_on_path(path):
+                cap = self.sim_core.get_link_attr(lk[0], lk[1], 'cap')
+                n_flows = self.sim_core.get_link_attr(lk[0], lk[1], 'n_active_flows') + 1
+                avail_bw = float(cap) / n_flows
+                if avail_bw < btnk_bw:
+                    btnk_bw = avail_bw
+
+            if (btnk_bw > best_bw):
+                best_bw = btnk_bw
+                best_path = path
+
+        return best_path    # Will return [] is no path available
+
+
     def find_path_ecmp(self, src_node, dst_node):
         """
         """
         nd  = src_node
         path = []
-        while True:            
+        while True:
             path.append(nd)
             if (nd == dst_node):
                 break
@@ -425,7 +455,7 @@ class SimCtrl(SimCtrlPathDB):
                     nd = rd.choice(self.ecmp_db[(src_node, dst_node)][nd])
                     if (not nd in path):
                         break
-        
+
         return path
 
 
@@ -454,6 +484,8 @@ class SimCtrl(SimCtrlPathDB):
             path = self.find_path_random(src_node, dst_node)
         elif (cfg.ROUTING_MODE == 'fe'):
             path = self.find_path_fe(src_node, dst_node)
+        elif (cfg.ROUTING_MODE == 'bw'):
+            path = self.find_path_bw(src_node, dst_node)
         else:
             path = self.find_path_random(src_node, dst_node)    # default to 'random'
         return path

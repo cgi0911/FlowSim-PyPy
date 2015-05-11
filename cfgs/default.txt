@@ -6,14 +6,15 @@ __author__      = 'Kuan-yin Chen'
 __copyright__   = 'Copyright 2014, NYU-Poly'
 
 import os
+import math
 
 # ---------------------------------------
 # Frequently Used
 # ---------------------------------------
-EXP_NAME    = 'all_fe_nr_800fps_unlmt'
+EXP_NAME    = 'a2_r_250fps'
 DIR_TOPO    = './topologies/spain'
 LOG_DIR     = os.path.join('./logs/', EXP_NAME)
-SIM_TIME    = 120.0
+SIM_TIME    = 300.0
 
 DO_REROUTE  =  0           # Do elephant flow rerouting (please refer to paper draft)
 
@@ -21,24 +22,25 @@ PATHDB_MODE     = 'all_shortest'    # Supported Path DB building modes:
                                     # 'all_shortest': Explore all shortest paths between each src-dst pair
                                     # 'kpath_yen': Build k-path between each src-dst pair, using Yen's algorithm
                                     # 'one_shortest': List one shortest path between each src-dst pair
-ROUTING_MODE    = 'fe'        # Supported routing modes:
+ROUTING_MODE    = 'random'        # Supported routing modes:
                                 # 'ecmp':   Equal-cost multi-shortest-path, per-flow
                                 # 'random'  Randomly pick a feasible path
                                 # 'fe':     Consider flow table balance
-K_PATH = 4                      # Number of predefined path per src-dst pair
+                                # 'bw':     Greedily choose the path with best bw
+K_PATH = 2                  # Number of predefined path per src-dst pair. -1 means list all shortest.
 #K_PATH_METHOD = 'yen'           # The algorithm used to set up k-path database
 
-DO_PROFILING = False             # Do code profiling for this experiment
+DO_PROFILING = True             # Do code profiling for this experiment
 
 # ---------------------------------------
 # Switch/link Initialization Parameters
 # ---------------------------------------
 OVERRIDE_TABLESIZE = True
-TABLESIZE_PER_SW = 100
+TABLESIZE_PER_SW = 1000
 OVERRIDE_N_HOSTS = True
 N_HOSTS_PER_SW = 10
 OVERRIDE_CAP = True
-CAP_PER_LINK = 10.0
+CAP_PER_LINK = 1.0
 CAP_UNIT     = 1.0e9    # Gbps
 
 
@@ -61,7 +63,7 @@ SHOW_SUMMARY = 1
 LOG_CONFIG = 1
 LOG_LINK_UTIL = 1
 LOG_TABLE_UTIL = 1
-LOG_FLOW_STATS = 0
+LOG_FLOW_STATS = 1
 LOG_SUMMARY = 1
 LOG_PATH_DB = 1
 IGNORE_HEAD = 0.3               # Ignore head (portion) rows when doing average
@@ -84,24 +86,27 @@ PERIOD_COLLECT = 0.500          # Period of counter collection
 # ----------------------------------------
 # Reroute-related Parameters
 # ----------------------------------------
-MAX_RETRY = 3                   # Number of retries when a packet_in is rejected
-RESET_ELEPHANT = 0
-REROUTE_ALGO = 'greedy'
-N_ELEPH_FLOWS = 20
+MAX_RETRY = 1                   # Number of retries when a packet_in is rejected
+RESET_ELEPHANT = 1
+REROUTE_ALGO = 'oab'
+N_ELEPH_FLOWS = 50
 
 # ----------------------------------------
 # Flow Generation Parameters
 # ----------------------------------------
-FLOWGEN_SRCDST_MODEL        = 'uniform'     # Model for flow source and destination
+FLOWGEN_SRCDST_MODEL        = 'antigravity'     # Model for flow source and destination
                                         # "uniform": Randomly pick one dst host that is not
                                         #   within source host's LAN.
+                                        # "gravity":
+                                        # "antigravity":
 
-FLOWGEN_SIZERATE_MODEL      = 'bimodal'     # Model for flow size and rate
+FLOWGEN_SIZERATE_MODEL      = 'lognormal'     # Model for flow size and rate
                                         # "uniform": Size and rate are generated in uniform
                                         #   random manner.
                                         # "bimodal": First decide whether a new flow is
                                         #   large or small, then decide its size and rate
                                         #   accordingly.
+                                        # "lognormal": Lognormal size distribution model.
 
 FLOWGEN_ARR_MODEL           = 'const'    # Flow arrival model
                                         # "saturate": Each host will be the source of
@@ -116,31 +121,42 @@ SRC_LIMITED                 = 0          # If 1, flow rates are limited by its s
 
 # Model parameters
 class FLOWGEN_SIZERATE_UNIFORM:
-    FLOW_SIZE_LO = 5e7
-    FLOW_SIZE_HI = 10e7
+    FLOW_SIZE_LO = 0.5e8
+    FLOW_SIZE_HI = 1.5e8
     FLOW_RATE_LO = 5e6
     FLOW_RATE_HI = 10e6
 
 class FLOWGEN_SIZERATE_BIMODAL:
     PROB_LARGE_FLOW = 0.1
-    FLOW_SIZE_LARGE_LO = 1.0e9
-    FLOW_SIZE_LARGE_HI = 1.0e9
+    RATIO_LARGE_SMALL = 100             # Must be greater than 1
+    FLOW_SIZE_AVG = 1.0e8
+    FLOW_SIZE_SMALL = FLOW_SIZE_AVG / (1 + (RATIO_LARGE_SMALL-1) * PROB_LARGE_FLOW) # Calculated, not assigned
+    FLOW_SIZE_LARGE = FLOW_SIZE_SMALL * RATIO_LARGE_SMALL
+    FLOW_SIZE_LARGE_LO = FLOW_SIZE_LARGE * 1.1
+    FLOW_SIZE_LARGE_HI = FLOW_SIZE_LARGE * 0.9
     FLOW_RATE_LARGE_LO = 1.0e8
     FLOW_RATE_LARGE_HI = 1.0e8
-    FLOW_SIZE_SMALL_LO = 1.0e7
-    FLOW_SIZE_SMALL_HI = 1.0e7
+    FLOW_SIZE_SMALL_LO = FLOW_SIZE_SMALL * 1.1
+    FLOW_SIZE_SMALL_HI = FLOW_SIZE_SMALL * 0.9
     FLOW_RATE_SMALL_LO = 1.0e7
     FLOW_RATE_SMALL_HI = 1.0e7
+
+class FLOWGEN_SIZERATE_LOGNORMAL:
+    FLOW_SIZE_AVG = 0.20e8
+    FLOW_SIZE_SIGMA = 1.0
+    FLOW_SIZE_MU = math.log(FLOW_SIZE_AVG) - (FLOW_SIZE_SIGMA ** 2) / 2     # Calculated, not assigned
+    FLOW_RATE_LO = 5e6
+    FLOW_RATE_HI = 10e6
 
 class FLOWGEN_ARR_SATURATE:
     INIT_FLOWS_SPREAD = 1.0
     NEXT_FLOW_DELAY = 0.0
 
 class FLOWGEN_ARR_CONST:
-    FLOW_ARR_RATE = 200.0       # flows/sec
+    FLOW_ARR_RATE = 250.0       # flows/sec
     CUTOFF = 0.1                # ratio to avg. inter-arrival time
                                 # The inter-arrival time will be uniform randomly chosen
                                 # in the interval of [AVG-CUTOFF*AVG, AVG+CUTOFF*AVG]
 
 class FLOWGEN_ARR_EXP:
-    FLOW_ARR_RATE = 200.0       # flows/sec, a.k.a. lambda
+    FLOW_ARR_RATE = 500.0       # flows/sec, a.k.a. lambda

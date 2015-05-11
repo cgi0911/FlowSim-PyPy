@@ -12,6 +12,7 @@ import math
 # Third-party modules
 import networkx as nx
 import netaddr as na
+import numpy.random as nprd
 # User-defined modules
 import SimConfig as cfg
 from SimEvent import *
@@ -202,6 +203,24 @@ class SimFlowGen:
         return fsize, frate
 
 
+    def gen_flow_size_rate_lognormal(self):
+        """Generate flow size according to lognormal distribution model
+
+        Args:
+            None. All parameters are from cfg.
+
+        Return:
+            float64: Uniform random flow size, round to integral digit.
+
+        """
+        fsize = round(nprd.lognormal(mean=cfg.FLOWGEN_SIZERATE_LOGNORMAL.FLOW_SIZE_MU, \
+                                     sigma=cfg.FLOWGEN_SIZERATE_LOGNORMAL.FLOW_SIZE_SIGMA), 0)
+        frate = rd.uniform(cfg.FLOWGEN_SIZERATE_LOGNORMAL.FLOW_RATE_LO, \
+                           cfg.FLOWGEN_SIZERATE_LOGNORMAL.FLOW_RATE_HI)
+
+        return fsize, frate
+
+
     def gen_flow_size_rate(self):
         """Generate flow size according to specified random model.
 
@@ -218,8 +237,11 @@ class SimFlowGen:
             fsize, frate = self.gen_flow_size_rate_uniform()
         elif (cfg.FLOWGEN_SIZERATE_MODEL == 'bimodal'):
             fsize, frate = self.gen_flow_size_rate_bimodal()
+        elif (cfg.FLOWGEN_SIZERATE_MODEL == 'lognormal'):
+            fsize, frate = self.gen_flow_size_rate_lognormal()
         else:
             fsize, frate = self.gen_flow_size_rate_uniform()  # Default to 'uniform'
+        #print fsize, frate
         return fsize, frate
 
 
